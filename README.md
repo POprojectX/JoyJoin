@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Nuxt Minimal Starter
 
 Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
@@ -74,6 +73,3 @@ bun run preview
 ```
 
 Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
-=======
-# JoyJoin
->>>>>>> 4d6ba6dc48ad944edd7a2aaf762a57874b4add4f
