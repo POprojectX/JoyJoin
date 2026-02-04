@@ -31,7 +31,7 @@ type eventService struct {
 
 func NewEventService(r repo.EventRepository) EventService {
 	s := &eventService{
-		eve:  r,
+		eventRepo:  r,
 		rateMap:   make(map[string]time.Time),
 		taskQueue: make(chan func(), 1000), 
 	}
