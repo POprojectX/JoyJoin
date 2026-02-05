@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"errors"
 	"sync"
 	"time"
 	"user-service/internal/domain"
@@ -37,16 +36,7 @@ func (s *AuthService) GenerateToken(userID uuid.UUID) (string, error) {
 
 
 //user-service
-var (
-	ErrUserNotFound = errors.New("user not found")
-	ErrEmailExists = errors.New("email already exist")
-	ErrInvalidPassword = errors.New("invalid password")
-	ErrValidationFailed = errors.New("validation failed")
-	ErrShortPassword = errors.New("password is too short, must be more then 5 symbols!")
-	ErrTooManyRequests = errors.New("too many requests! (1 req/sec)")
-	ErrContextCancelled = errors.New("context was cancelled")
-	ErrNoEvents = errors.New("user has no events")
-)
+
 
 type UserService interface {
 	// Auth
@@ -89,30 +79,6 @@ func NewUserService(r repo.UserRepository) UserService {
 	return s
 }
 
-//тут мы запускаем наш воркер пул
-func (s *userService) starterWorkerPool(workers int) {
-	for i:= 0; i < workers; i++ {
-		go func(id int) {
-			for task := range s.taskQueue {
-				task()
-			}
-		}(i)
-	}
-}
-
-//тут будет лимитер который будет следить за лемитом на каждый email, что бы один еблан не положил сервак.
-//Если будем писать тесты: один пользователь (то есть с одного мыла) может делать ОДИН запрос В СЕКУНДУ!
-func (s *userService) checkRateLimitPerEmail(key string) bool {
-	s.rateLimiter.Lock()
-
-	now := time.Now()
-	if lastTime, exists := s.rateMap[key]; exists {
-		if now.Sub(lastTime) < time.Second {
-			return false
-		}
-	}
-	return true
-}
 
 func (s *userService) Register(ctx context.Context, email, password, firstName, lastName string) (*domain.User, error) {
 	//тут куча if-ов так как я хз как по другому проверить на фулл ошибки, слой гавнокодика :)
@@ -297,6 +263,15 @@ func (s *userService) GetUserWithEvents(ctx context.Context, userID uuid.UUID) (
 		LastName:  user.LastName,
 		Events:    eventsDTO,
 	}, nil
+}
+
+//используем утилиты
+func (s *userService) starterWorkerPool(workers int) {
+	StarterWorkerPool(workers, s.taskQueue)
+}
+
+func (s *userService) checkRateLimitPerEmail(email string) bool {
+	return CheckRateLimitPerEmail(email, &s.rateLimiter, s.rateMap)
 }
 
 //participant-service

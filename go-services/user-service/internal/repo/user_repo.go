@@ -120,6 +120,7 @@ func (r *userRepo) ListByEmail(ctx context.Context, emails []string) (map[string
 func (r *userRepo) GetUserEvents(ctx context.Context, userID uuid.UUID) ([]domain.EventParticipant, error) {
 	var participations []domain.EventParticipant
 	err := r.db.
+		WithContext(ctx).
 		Preload("Event").        // подгружаем данные события
 		Preload("ProfessionalRole"). // подгружаем специализацию
 		Where("user_id = ?", userID).

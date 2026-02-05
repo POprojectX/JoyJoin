@@ -37,6 +37,14 @@ type User struct {
 	Participations []EventParticipant `gorm:"foreignKey:UserID"`
 }
 
+//решить надо с update методом! 
+type UpdateUserInput struct {
+	Title       *string
+	Description *string
+	Location    *string
+	Date        *time.Time
+}
+
 type Event struct {
 	ID          uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
 	Title       string    `gorm:"not null;size:200;index"`
@@ -48,6 +56,14 @@ type Event struct {
 	UpdatedAt   time.Time
 
 	Participants []EventParticipant `gorm:"foreignKey:EventID"`
+}
+
+//DTO чисто для метода Update, что бы сделать его более еластичным (возможность обновлять еластично поля)
+type UpdateEventInput struct {
+	Title       *string
+	Description *string
+	Location    *string
+	Date        *time.Time
 }
 
 
