@@ -36,8 +36,6 @@ func (s *AuthService) GenerateToken(userID uuid.UUID) (string, error) {
 
 
 //user-service
-
-
 type UserService interface {
 	// Auth
 	Register(ctx context.Context, email, password, firstName, lastName string) (*domain.User, error)
@@ -45,7 +43,7 @@ type UserService interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.User, error)
 	
 	// CRUD
-	Update(ctx context.Context, userID uuid.UUID, firstName, lastName string) (*domain.User, error)
+	Update(ctx context.Context, input domain.UpdateUserInput, id uuid.UUID) (*domain.User, error)
 	Delete(ctx context.Context, userID uuid.UUID) (*domain.User, error)
 
 	// Business logic
@@ -183,22 +181,35 @@ func (s *userService) GetByID(ctx context.Context, id uuid.UUID) (*domain.User, 
 	return user, nil
 }
 
-func (s *userService) Update(ctx context.Context, userID uuid.UUID, firstName, lastName string) (*domain.User, error) {
-	user, err := s.userRepo.GetByID(ctx, userID)
-	if err != nil {
+func (s *userService) Update(ctx context.Context, input domain.UpdateUserInput, id uuid.UUID) (*domain.User, error) {
+	updates := make(map[string]interface{})
+
+	CollectUpdates(updates, input.FirstName != nil, "firstName", input.FirstName)
+	CollectUpdates(updates, input.LastName != nil, "firstName", input.LastName)
+
+	if input.Passwrod != nil {
+		if len(*input.Passwrod) < 6 {
+			return nil, ErrShortPassword
+		}
+
+		hashed, err := bcrypt.GenerateFromPassword([]byte(*input.Passwrod), bcrypt.DefaultCost)
+		if err != nil {
+			return nil, err
+		}
+		updates["password"] = hashed
+	}
+
+	if len(updates) == 0 {
+		return s.userRepo.GetByID(ctx, id)
+	}
+
+	updates["updated_at"] = time.Now()
+	
+	if err := s.userRepo.Update(ctx, id, updates); err != nil {
 		return nil, err
 	}
-	if user == nil {
-		return nil, ErrUserNotFound
-	}
 
-	user.FirstName = firstName
-	user.LastName = lastName
-	user.UpdatedAt = time.Now()
-
-	s.userRepo.Update(ctx, user)
-
-	return user, nil
+	return s.userRepo.GetByID(ctx, id)	
 }
 
 func (s *userService) Delete(ctx context.Context, userID uuid.UUID) (*domain.User, error) {

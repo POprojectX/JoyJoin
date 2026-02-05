@@ -13,7 +13,7 @@ import (
 type EventRepository interface {
 	Create(ctx context.Context, event *domain.Event) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Event, error)
-	Update(ctx context.Context, event *domain.Event) error
+	Update(ctx context.Context, id uuid.UUID, updates map[string]interface{}) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	ListByDateRange(ctx context.Context, start, end time.Time) ([]domain.Event, error)
 	// Получить всех участников события с их ролями
@@ -54,8 +54,8 @@ func (r *eventRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Event, e
 	return &event, err
 }
 
-func (r *eventRepo) Update(ctx context.Context, event *domain.Event) error {
-	return r.db.WithContext(ctx).Model(event).Updates(event).Error
+func (r *eventRepo) Update(ctx context.Context, id uuid.UUID, updates map[string]interface{}) error {
+	return r.db.WithContext(ctx).Model(&domain.Event{}).Where("id = ?", id).Updates(updates).Error
 }
 
 func (r *eventRepo) Delete(ctx context.Context, id uuid.UUID) error {

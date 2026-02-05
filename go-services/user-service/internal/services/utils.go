@@ -31,3 +31,18 @@ func CheckRateLimitPerEmail(key string, rateLimiter *sync.RWMutex, rateMap map[s
 	rateMap[key] = now
 	return true
 }
+
+//утилиты для Update метода
+func ApplyNotNil [T any] (target *T, source *T) bool {
+	if source != nil {
+		*target = *source
+		return false
+	}
+	return true
+}
+
+func CollectUpdates(updates map[string]interface{}, condition bool, key string, value interface{}) {
+	if condition {
+		updates[key] = value
+	}
+}

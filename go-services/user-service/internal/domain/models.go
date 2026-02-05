@@ -39,10 +39,9 @@ type User struct {
 
 //решить надо с update методом! 
 type UpdateUserInput struct {
-	Title       *string
-	Description *string
-	Location    *string
-	Date        *time.Time
+	FirstName *string
+	LastName *string
+	Passwrod *string
 }
 
 type Event struct {

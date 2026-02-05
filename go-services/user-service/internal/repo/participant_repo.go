@@ -27,6 +27,7 @@ type ParticipantRepository interface {
 
 type participantRepo struct {
 	db *gorm.DB
+	workerPool chan struct{}
 }
 
 func NewParticipantRepository(db *gorm.DB) ParticipantRepository {

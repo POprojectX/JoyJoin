@@ -15,7 +15,7 @@ type UserRepository interface {
 	Create(ctx context.Context, user *domain.User) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.User, error)
 	GetByEmail(ctx context.Context, email string) (*domain.User, error)
-	Update(ctx context.Context, user *domain.User) error
+	Update(ctx context.Context, id uuid.UUID, updates map[string]interface{}) error
 	Delete(ctx context.Context, user *domain.User) error
 	ListByEmail(ctx context.Context, emails []string) (map[string]*domain.User, error)
 	// Получить все события, где пользователь участвует
@@ -26,7 +26,6 @@ type userRepo struct {
 	db *gorm.DB
 	workerPool chan struct{}
 }
-
 func NewUserRepository(db *gorm.DB, maxWorkers int) UserRepository {
 	return &userRepo{
 		db: db,
@@ -66,9 +65,9 @@ func (r *userRepo) GetByEmail(ctx context.Context, email string) (*domain.User, 
 }
 
 // Update - обновление (только переданные поля)
-func (r *userRepo) Update(ctx context.Context, user *domain.User) error {
+func (r *userRepo) Update(ctx context.Context, id uuid.UUID, updates map[string]interface{}) error {
 	// Updates обновляет только ненулевые поля
-	return r.db.WithContext(ctx).Where("id = ?", user.ID).Updates(user).Error
+	return r.db.WithContext(ctx).Model(&domain.User{}).Where("id = ?", id).Updates(updates).Error
 }
 
 // Delete - soft delete или hard delete (зависит от GORM config)

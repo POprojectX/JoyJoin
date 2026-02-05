@@ -13,7 +13,7 @@ import (
 type EventService interface {
 	Create(ctx context.Context, title, description, location string, date time.Time, ownerID uuid.UUID) (*domain.Event, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Event, error)
-	Update(ctx context.Context, title, description, location string, date time.Time, id uuid.UUID) (*domain.Event, error)
+	Update(ctx context.Context, input domain.UpdateEventInput, id uuid.UUID) (*domain.Event, error)
 	Delete(ctx context.Context, id uuid.UUID) (*domain.Event, error)
 	ListByDateRange(ctx context.Context, start, end time.Time) ([]domain.Event, error)
 	// Получить всех участников события с их ролями
@@ -84,23 +84,25 @@ func (s *eventService) GetByID(ctx context.Context, id uuid.UUID) (*domain.Event
 }
 
 func (s *eventService) Update(ctx context.Context, input domain.UpdateEventInput, id uuid.UUID) (*domain.Event, error) {
-	event, err := s.eventRepo.GetByID(ctx, id)
-	if err != nil {
+	updates := make(map[string]interface{})
+	
+	// Чисто, читаемо, без дублирования
+	CollectUpdates(updates, input.Title != nil, "title", input.Title)
+	CollectUpdates(updates, input.Description != nil, "description", input.Description)
+	CollectUpdates(updates, input.Location != nil, "location", input.Location)
+	CollectUpdates(updates, input.Date != nil, "date", input.Date)
+
+	if len(updates) == 0 {
+		return s.eventRepo.GetByID(ctx, id)
+	}
+
+	updates["updated_at"] = time.Now()
+
+	if err := s.eventRepo.Update(ctx, id, updates); err != nil {
 		return nil, err
 	}
-	if event == nil {
-		return nil, ErrEventNotFound
-	}
 
-	event.Title = title
-	event.Description = description
-	event.Location = location
-	event.Date = date
-	event.UpdatedAt = time.Now()
-
-	s.eventRepo.Update(ctx, event)
-
-	return event, nil
+	return s.eventRepo.GetByID(ctx, id)
 }
 
 func(s *eventService) Delete(ctx context.Context, id uuid.UUID) (*domain.Event, error) {
