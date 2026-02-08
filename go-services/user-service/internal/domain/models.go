@@ -17,6 +17,19 @@ const (
 	RoleStaff     SystemRole = "Staff"
 )
 
+// тут все статусы ивента + обьяснения для чего они нужны
+type Status string
+
+const (
+	// черновик, виден ивент только тем кто работает над ним, например если еще ивент еще на садии планирования, логистики и тд. 
+	// Можно редачить, регаться нет
+	StatusDraft Status = "Draft"   
+	StatusAnnounced Status = "Announced" //Анонсирован, билетов/регистрации пока нет, просто как новость об ивенте.
+	StatusOngoing Status = "Ongoing" // ивент идет прямо сейчас, редачить нельзя место/дату, регаться уже нельзя
+	StatusCompleted Status = "Completed" // уже завершен, присойдениться нельзя
+	StatusCancelled Status = "Cancelled" // отменен, все активные роли аннулируются, отменить можно организатором
+)
+
 type ProfessionalRole struct {
 	ID   uint   `gorm:"primaryKey"`
 	Name string `gorm:"unique;not null"` // "Photographer", "DJ", "Chef" или кто то другой там
@@ -46,9 +59,11 @@ type UpdateUserInput struct {
 
 type Event struct {
 	ID          uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	Status 		Status `gorm:"not null"`
 	Title       string    `gorm:"not null;size:200;index"`
 	Description string    `gorm:"type:text"`
-	Date        time.Time `gorm:"index"`
+	DateFrom    time.Time `gorm:"index"`
+	DateTo		time.Time `gorm:"index"`
 	Location    string    `gorm:"size:255"`
 	OwnerID     uuid.UUID `gorm:"type:uuid;index;not null"`
 	CreatedAt   time.Time `gorm:"index"`
@@ -59,10 +74,12 @@ type Event struct {
 
 //DTO чисто для метода Update, что бы сделать его более еластичным (возможность обновлять еластично поля)
 type UpdateEventInput struct {
+	Status		*Status
 	Title       *string
 	Description *string
 	Location    *string
-	Date        *time.Time
+	DateFrom    *time.Time
+	DateTo 		*time.Time
 }
 
 
@@ -98,7 +115,8 @@ type UserWithEventsDTO struct {
 type EventSummaryDTO struct {
 	EventID    uuid.UUID       `json:"event_id"`
 	Title      string          `json:"title"`
-	Date       time.Time       `json:"date"`
+	DateFrom   time.Time       `json:"date"`
+	DateTo   time.Time       `json:"date"`
 	SystemRole SystemRole      `json:"system_role"`
 	JoinedAt   time.Time       `json:"joined_at"`
 }

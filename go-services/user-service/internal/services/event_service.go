@@ -11,7 +11,7 @@ import (
 )
 
 type EventService interface {
-	Create(ctx context.Context, title, description, location string, date time.Time, ownerID uuid.UUID) (*domain.Event, error)
+	Create(ctx context.Context, title, description, location string, dateFrom, dateTo time.Time, ownerID uuid.UUID) (*domain.Event, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Event, error)
 	Update(ctx context.Context, input domain.UpdateEventInput, id uuid.UUID) (*domain.Event, error)
 	Delete(ctx context.Context, id uuid.UUID) (*domain.Event, error)
@@ -42,25 +42,20 @@ func NewEventService(r repo.EventRepository) EventService {
 	return s
 }
 
-func (s *eventService) Create(ctx context.Context, title, description, location string, date time.Time, ownerID uuid.UUID) (*domain.Event, error) {
+func (s *eventService) Create(ctx context.Context, title, description, location string, dateFrom, dateTo time.Time, ownerID uuid.UUID) (*domain.Event, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, ErrContextCancelled
 	}
 	if title == "" {
 		return nil, ErrNoEventTitle
 	}
-
-	select {
-	case <- ctx.Done():
-		return nil, ErrContextCancelled
-	default://тут по идее я уже должен выходить из селекта и уже создавать наш ивент
-	}
-
 	
 	event := &domain.Event{
+		Status: domain.StatusDraft,
 		Title: title,
 		Description: description,
-		Date: date,
+		DateFrom: dateFrom,
+		DateTo: dateTo,
 		Location: location,
 		OwnerID: ownerID,
 		CreatedAt: time.Now(),
@@ -84,13 +79,25 @@ func (s *eventService) GetByID(ctx context.Context, id uuid.UUID) (*domain.Event
 }
 
 func (s *eventService) Update(ctx context.Context, input domain.UpdateEventInput, id uuid.UUID) (*domain.Event, error) {
+	currentEvent, err := s.eventRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if currentEvent == nil {
+		return nil, ErrEventNotFound
+	}
+	if currentEvent.Status == domain.StatusOngoing || currentEvent.Status == domain.StatusCompleted || currentEvent.Status == domain.StatusCancelled {
+		return nil, ErrCantUpdateEvent
+	}
 	updates := make(map[string]interface{})
 	
 	// Чисто, читаемо, без дублирования
+	CollectUpdates(updates, input.Status != nil, "status", input.Status)
 	CollectUpdates(updates, input.Title != nil, "title", input.Title)
 	CollectUpdates(updates, input.Description != nil, "description", input.Description)
 	CollectUpdates(updates, input.Location != nil, "location", input.Location)
-	CollectUpdates(updates, input.Date != nil, "date", input.Date)
+	CollectUpdates(updates, input.DateFrom != nil, "date_from", input.DateFrom)
+	CollectUpdates(updates, input.DateTo != nil, "date_to", input.DateTo)
 
 	if len(updates) == 0 {
 		return s.eventRepo.GetByID(ctx, id)
@@ -105,6 +112,68 @@ func (s *eventService) Update(ctx context.Context, input domain.UpdateEventInput
 	return s.eventRepo.GetByID(ctx, id)
 }
 
+func (s *eventService) PublishEvent(ctx context.Context, id uuid.UUID) (*domain.Event, error) {
+	event, err := s.eventRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if event.Status != domain.StatusDraft {
+		return nil, ErrCantPublishEvent
+	}
+	event.Status = domain.StatusAnnounced
+	input := domain.UpdateEventInput{
+		Status: &event.Status,
+		Title: &event.Title,
+		Description: &event.Description,
+		Location: &event.Location,
+		DateFrom: &event.DateFrom,
+		DateTo: &event.DateTo,
+	}
+	return s.Update(ctx, input, id)
+}
+
+func (s *eventService) DraftEvent(ctx context.Context, id uuid.UUID) (*domain.Event, error) {
+	event, err := s.eventRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if event.Status != domain.StatusAnnounced {
+		return nil, ErrCantDraftEvent
+	}
+	event.Status = domain.StatusDraft
+	input := domain.UpdateEventInput{
+		Status: &event.Status,
+		Title: &event.Title,
+		Description: &event.Description,
+		Location: &event.Location,
+		DateFrom: &event.DateFrom,
+		DateTo: &event.DateTo,
+	}
+	return s.Update(ctx, input, id)
+}
+
+func (s *eventService) CancelledEvent(ctx context.Context, id uuid.UUID) (*domain.Event, error) {
+	event, err := s.eventRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if event.Status == domain.StatusDraft || event.Status == domain.StatusAnnounced {
+		event.Status = domain.StatusCancelled
+	} else {
+		return nil, ErrCantCancelEvent
+	}
+	
+	input := domain.UpdateEventInput{
+		Status: &event.Status,
+		Title: &event.Title,
+		Description: &event.Description,
+		Location: &event.Location,
+		DateFrom: &event.DateFrom,
+		DateTo: &event.DateTo,
+	}
+	return s.Update(ctx, input, id)
+}
+
 func(s *eventService) Delete(ctx context.Context, id uuid.UUID) (*domain.Event, error) {
 	event, err := s.eventRepo.GetByID(ctx, id)
 	if err != nil {
@@ -113,8 +182,11 @@ func(s *eventService) Delete(ctx context.Context, id uuid.UUID) (*domain.Event, 
 	if event == nil {
 		return nil, ErrEventNotFound
 	}
-
-	s.eventRepo.Delete(ctx, id)
+	if event.Status == domain.StatusAnnounced || event.Status == domain.StatusDraft {
+		s.eventRepo.Delete(ctx, id)
+	}else {
+		return nil, ErrDeleteLiveEvent
+	}
 
 	return nil, nil
 }

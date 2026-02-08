@@ -261,7 +261,8 @@ func (s *userService) GetUserWithEvents(ctx context.Context, userID uuid.UUID) (
 		eventsDTO[i] = domain.EventSummaryDTO{
 			EventID:    p.EventID,
 			Title:      p.Event.Title,
-			Date:       p.Event.Date,
+			DateFrom:       p.Event.DateFrom,
+			DateTo:       p.Event.DateTo,
 			SystemRole: p.SystemRole,
 			JoinedAt:   p.JoinedAt,
 		}
@@ -284,5 +285,3 @@ func (s *userService) starterWorkerPool(workers int) {
 func (s *userService) checkRateLimitPerEmail(email string) bool {
 	return CheckRateLimitPerEmail(email, &s.rateLimiter, s.rateMap)
 }
-
-//participant-service

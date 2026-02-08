@@ -122,15 +122,11 @@ func (s *participantService) AssignRole(
 	role domain.SystemRole,
 	profRoleID *uint,
 ) error {
-	if err := ctx.Err(); err != nil {
-		return ErrContextCancelled
-	}
-
 	key := requesterID.String() + ":" + eventID.String() + ":assign"
 	if !s.checkRateLimitPerEmail(key) {
 		return ErrTooManyRequests
 	}
-
+	
 	event, err := s.eventRepo.GetByID(ctx, eventID)
 	if err != nil {
 		return err
@@ -138,7 +134,13 @@ func (s *participantService) AssignRole(
 	if event == nil {
 		return ErrEventNotFound
 	}
-
+	if event.Status == domain.StatusCompleted || event.Status == domain.StatusCancelled {
+		return ErrCantBeAssignToEvent
+	}
+	if err := ctx.Err(); err != nil {
+		return ErrContextCancelled
+	}
+	
 	type result struct {
 		hasRight bool
 		err      error

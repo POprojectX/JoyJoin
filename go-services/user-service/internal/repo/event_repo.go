@@ -64,7 +64,7 @@ func (r *eventRepo) Delete(ctx context.Context, id uuid.UUID) error {
 
 func (r *eventRepo) ListByDateRange(ctx context.Context, start, end time.Time) ([]domain.Event, error) {
 	var events []domain.Event
-	err := r.db.WithContext(ctx).Where("date BETWEEN ? AND ?", start, end).Find(&events).Error
+	err := r.db.WithContext(ctx).Where("date_from BETWEEN ? AND ?", start, end).Find(&events).Error
 	return events, err
 }
 
