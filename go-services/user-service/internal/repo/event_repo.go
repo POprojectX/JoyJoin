@@ -20,6 +20,9 @@ type EventRepository interface {
 	GetEventParticipants(ctx context.Context, eventID uuid.UUID) ([]domain.EventParticipant, error)
 	// Получить события по системной роли пользователя
 	GetEventsByUserRole(ctx context.Context, userID uuid.UUID, role domain.SystemRole) ([]domain.Event, error)
+	HasAvailableSlots(ctx context.Context, eventID uuid.UUID) (bool, error)
+	TakeSlot(ctx context.Context, eventID uuid.UUID) (bool, error)
+	FreeUpSlot(ctx context.Context, eventID uuid.UUID) (bool, error)
 }
 
 type eventRepo struct {
@@ -88,4 +91,55 @@ func (r *eventRepo) GetEventsByUserRole(ctx context.Context, userID uuid.UUID, r
 		Where("event_participants.user_id = ? AND event_participants.system_role = ?", userID, role).
 		Find(&events).Error
 	return events, err
+}
+
+func (r *eventRepo) HasAvailableSlots(ctx context.Context, eventID uuid.UUID) (bool, error) {
+	var event domain.Event
+	err := r.db.WithContext(ctx).First(&event, "id = ?", eventID).Error
+	if err != nil {
+		return false, err
+	}
+	return event.AvailableSlots > 0, nil
+}
+
+func (r *eventRepo) TakeSlot(ctx context.Context, eventID uuid.UUID) (bool, error) {
+	result := r.db.WithContext(ctx).
+		Model(&domain.Event{}).
+		Where("id = ? AND available_slots > 0 AND status IN ('Announced', 'Ongoing')", eventID).
+		UpdateColumn(
+			"available_slots",
+			gorm.Expr("available_slots - 1"),
+		)
+
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	// если 0 строк обновлено — слотов нет
+	if result.RowsAffected == 0 {
+		return false, errors.New("event didnt find or no free slots")
+	}
+
+	return true, nil
+}
+
+func (r *eventRepo) FreeUpSlot(ctx context.Context, eventID uuid.UUID) (bool, error) {
+	result := r.db.WithContext(ctx).
+		Model(&domain.Event{}).
+		Where("id = ? AND available_slots < slots AND status IN ('Announced', 'Ongoing')", eventID).
+		UpdateColumn(
+			"available_slots",
+			gorm.Expr("available_slots + 1"),
+		)
+
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		// либо ивент не найден, либо слоты уже полностью свободны
+		return false, errors.New("event didnt find or all slots are free")
+	}
+
+	return true, nil
 }

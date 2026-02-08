@@ -29,4 +29,8 @@ var (
 	ErrCantUpdateEvent 		 = errors.New("cant update event")
 	ErrCantBeAssignToEvent	 = errors.New("cant be assign to event")
 	ErrCantCancelEvent		 = errors.New("cant cancel event")
+	ErrNoSlotsAvailable      = errors.New("no slots available for this event")
+    ErrEventFull             = errors.New("event is full")
+    ErrInvalidSlots          = errors.New("slots must be greater than 0")
+    ErrSlotsAlreadyFilled    = errors.New("cannot reduce slots below current participants count")
 )

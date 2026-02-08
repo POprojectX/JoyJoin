@@ -20,6 +20,11 @@ type EventService interface {
 	GetEventParticipants(ctx context.Context, eventID uuid.UUID) ([]domain.EventParticipant, error)
 	// Получить события по системной роли пользователя
 	GetEventsByUserRole(ctx context.Context, userID uuid.UUID, role domain.SystemRole) ([]domain.Event, error)
+
+	SetSlots(ctx context.Context, eventID uuid.UUID, slots int) (*domain.Event, error)
+    OccupySlot(ctx context.Context, eventID uuid.UUID) error
+    ReleaseSlot(ctx context.Context, eventID uuid.UUID) error
+    HasAvailableSlots(ctx context.Context, eventID uuid.UUID) (bool, error)
 }
 
 type eventService struct {
@@ -27,13 +32,21 @@ type eventService struct {
 	rateLimiter sync.RWMutex
 	rateMap map[string]time.Time
 	taskQueue chan func()
+	workerPool chan struct{}
+}
+
+type slotsOperation struct {
+    eventID uuid.UUID
+    delta   int
+    done    chan error
 }
 
 func NewEventService(r repo.EventRepository) EventService {
 	s := &eventService{
 		eventRepo:  r,
 		rateMap:   make(map[string]time.Time),
-		taskQueue: make(chan func(), 1000), 
+		taskQueue: make(chan func(), 1000),
+		workerPool: make(chan struct{}, 1),
 	}
 	
 	// Запускаем пул воркеров для фоновых задач
@@ -98,6 +111,7 @@ func (s *eventService) Update(ctx context.Context, input domain.UpdateEventInput
 	CollectUpdates(updates, input.Location != nil, "location", input.Location)
 	CollectUpdates(updates, input.DateFrom != nil, "date_from", input.DateFrom)
 	CollectUpdates(updates, input.DateTo != nil, "date_to", input.DateTo)
+	CollectUpdates(updates, input.Slots != nil, "slots", input.Slots)
 
 	if len(updates) == 0 {
 		return s.eventRepo.GetByID(ctx, id)
@@ -221,6 +235,85 @@ func (s *eventService) GetEventsByUserRole(ctx context.Context, userID uuid.UUID
 	}
 
 	return events, nil
+}
+
+func (s *eventService) SetSlots(ctx context.Context, eventID uuid.UUID, slots int) (*domain.Event, error) {
+    if err := ctx.Err(); err != nil {
+        return nil, ErrContextCancelled
+    }
+    if slots <= 0 {
+        return nil, ErrInvalidSlots
+    }
+
+    event, err := s.eventRepo.GetByID(ctx, eventID)
+    if err != nil {
+        return nil, err
+    }
+    if event == nil {
+        return nil, ErrEventNotFound
+    }
+
+    if event.Status != domain.StatusDraft && event.Status != domain.StatusAnnounced {
+        return nil, ErrCantUpdateEvent
+    }
+
+    participants, err := s.eventRepo.GetEventParticipants(ctx, eventID)
+    if err != nil {
+        return nil, err
+    }
+    
+    currentParticipants := len(participants)
+    if slots < currentParticipants {
+        return nil, ErrSlotsAlreadyFilled
+    }
+
+    updates := map[string]interface{}{
+        "slots":      slots,
+        "updated_at": time.Now(),
+    }
+
+    if err := s.eventRepo.Update(ctx, eventID, updates); err != nil {
+        return nil, err
+    }
+
+    return s.eventRepo.GetByID(ctx, eventID)
+}
+
+// OccupySlot - атомарно занимаем слот при регистрации
+func (s *eventService) OccupySlot(ctx context.Context, eventID uuid.UUID) error {
+	ok, err := s.eventRepo.TakeSlot(ctx, eventID)
+	if err != nil {
+		return err
+	}
+
+	if !ok {
+		return ErrNoSlotsAvailable
+	}
+
+	return nil
+}
+
+// ReleaseSlot - освобождаем слот
+func (s *eventService) ReleaseSlot(ctx context.Context, eventID uuid.UUID) error {
+    result, err :=s.eventRepo.TakeSlot(ctx, eventID)
+	if err != nil {
+		return err
+	}
+	if !result {
+		return err
+	}
+    return nil
+}
+
+func (s *eventService) HasAvailableSlots(ctx context.Context, eventID uuid.UUID) (bool, error) {
+    result, err := s.eventRepo.HasAvailableSlots(ctx, eventID)
+	if err != nil {
+		return false, err
+	}
+	if !result {
+		return false, ErrNoSlotsAvailable
+	}
+	return true, nil
 }
 
 //используем утилиты

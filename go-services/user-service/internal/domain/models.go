@@ -59,9 +59,11 @@ type UpdateUserInput struct {
 
 type Event struct {
 	ID          uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	Status 		Status `gorm:"not null"`
+	Status 		Status    `gorm:"not null"`
 	Title       string    `gorm:"not null;size:200;index"`
 	Description string    `gorm:"type:text"`
+	Slots		int 	  `gorm:"not null"`
+	AvailableSlots int	  `gorm:"not null;check:available_slots <= slots""`
 	DateFrom    time.Time `gorm:"index"`
 	DateTo		time.Time `gorm:"index"`
 	Location    string    `gorm:"size:255"`
@@ -80,6 +82,7 @@ type UpdateEventInput struct {
 	Location    *string
 	DateFrom    *time.Time
 	DateTo 		*time.Time
+	Slots		*int
 }
 
 

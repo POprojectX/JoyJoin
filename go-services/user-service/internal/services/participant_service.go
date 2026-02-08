@@ -114,6 +114,7 @@ func (s *participantService) HasAnyRole(ctx context.Context, userID, eventID uui
 	return s.participantRepo.HasAnyRole(ctx, userID, eventID, roles...)
 }
 
+//метод который приписывает кого то к ивенту + выдаем мы ему роль
 func (s *participantService) AssignRole(
 	ctx context.Context,
 	requesterID,
@@ -126,7 +127,7 @@ func (s *participantService) AssignRole(
 	if !s.checkRateLimitPerEmail(key) {
 		return ErrTooManyRequests
 	}
-	
+
 	event, err := s.eventRepo.GetByID(ctx, eventID)
 	if err != nil {
 		return err
@@ -137,8 +138,25 @@ func (s *participantService) AssignRole(
 	if event.Status == domain.StatusCompleted || event.Status == domain.StatusCancelled {
 		return ErrCantBeAssignToEvent
 	}
+	HasFreeSlots, err := s.eventRepo.HasAvailableSlots(ctx, eventID)
+	if err != nil {
+		return err
+	}
+	if !HasFreeSlots {
+		return ErrNoSlotsAvailable
+	}
 	if err := ctx.Err(); err != nil {
 		return ErrContextCancelled
+	}
+
+	if role == domain.RoleGuest {
+		hasSlots, err := s.eventRepo.HasAvailableSlots(ctx, eventID)
+		if err != nil {
+			return err
+		}
+		if !hasSlots {
+			return ErrNoSlotsAvailable
+		}
 	}
 	
 	type result struct {
@@ -309,7 +327,7 @@ func (s *participantService) removeOther(ctx context.Context, requesterID, targe
 }
 
 // ==================== BATCH ОПЕРАЦИИ ====================
-
+//тут мы можем приписать пачкой кого то к ивенту, например если у нас идут Staff группой (группа официантов или же кого то еще)
 func (s *participantService) AssignRolesBulk(
 	ctx context.Context,
 	requesterID,
