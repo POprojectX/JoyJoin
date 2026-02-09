@@ -104,42 +104,26 @@ func (r *eventRepo) HasAvailableSlots(ctx context.Context, eventID uuid.UUID) (b
 
 func (r *eventRepo) TakeSlot(ctx context.Context, eventID uuid.UUID) (bool, error) {
 	result := r.db.WithContext(ctx).
-		Model(&domain.Event{}).
-		Where("id = ? AND available_slots > 0 AND status IN ('Announced', 'Ongoing')", eventID).
-		UpdateColumn(
-			"available_slots",
-			gorm.Expr("available_slots - 1"),
-		)
+        Model(&domain.Event{}).
+        Where("id = ? AND available_slots > 0 AND status IN ('Announced', 'Ongoing')", eventID).
+        UpdateColumn("available_slots", gorm.Expr("available_slots - 1"))
 
-	if result.Error != nil {
-		return false, result.Error
-	}
+    if result.Error != nil {
+        return false, result.Error
+    }
 
-	// если 0 строк обновлено — слотов нет
-	if result.RowsAffected == 0 {
-		return false, errors.New("event didnt find or no free slots")
-	}
-
-	return true, nil
+    return result.RowsAffected > 0, nil
 }
 
 func (r *eventRepo) FreeUpSlot(ctx context.Context, eventID uuid.UUID) (bool, error) {
 	result := r.db.WithContext(ctx).
-		Model(&domain.Event{}).
-		Where("id = ? AND available_slots < slots AND status IN ('Announced', 'Ongoing')", eventID).
-		UpdateColumn(
-			"available_slots",
-			gorm.Expr("available_slots + 1"),
-		)
+        Model(&domain.Event{}).
+        Where("id = ? AND available_slots < slots AND status IN ('Announced', 'Ongoing')", eventID).
+        UpdateColumn("available_slots", gorm.Expr("available_slots + 1"))
 
-	if result.Error != nil {
-		return false, result.Error
-	}
+    if result.Error != nil {
+        return false, result.Error
+    }
 
-	if result.RowsAffected == 0 {
-		// либо ивент не найден, либо слоты уже полностью свободны
-		return false, errors.New("event didnt find or all slots are free")
-	}
-
-	return true, nil
+    return result.RowsAffected > 0, nil
 }

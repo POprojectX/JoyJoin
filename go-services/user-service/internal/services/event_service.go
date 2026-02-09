@@ -11,7 +11,7 @@ import (
 )
 
 type EventService interface {
-	Create(ctx context.Context, title, description, location string, dateFrom, dateTo time.Time, ownerID uuid.UUID) (*domain.Event, error)
+	Create(ctx context.Context, title, description, location string, slots int,  dateFrom, dateTo time.Time, ownerID uuid.UUID) (*domain.Event, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Event, error)
 	Update(ctx context.Context, input domain.UpdateEventInput, id uuid.UUID) (*domain.Event, error)
 	Delete(ctx context.Context, id uuid.UUID) (*domain.Event, error)
@@ -55,7 +55,7 @@ func NewEventService(r repo.EventRepository) EventService {
 	return s
 }
 
-func (s *eventService) Create(ctx context.Context, title, description, location string, dateFrom, dateTo time.Time, ownerID uuid.UUID) (*domain.Event, error) {
+func (s *eventService) Create(ctx context.Context, title, description, location string, slots int, dateFrom, dateTo time.Time, ownerID uuid.UUID) (*domain.Event, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, ErrContextCancelled
 	}
@@ -67,6 +67,8 @@ func (s *eventService) Create(ctx context.Context, title, description, location 
 		Status: domain.StatusDraft,
 		Title: title,
 		Description: description,
+		Slots: slots,
+		AvailableSlots: slots,
 		DateFrom: dateFrom,
 		DateTo: dateTo,
 		Location: location,
@@ -75,7 +77,10 @@ func (s *eventService) Create(ctx context.Context, title, description, location 
 		UpdatedAt: time.Now(),
 	}
 
-	s.eventRepo.Create(ctx, event)
+	err := s.eventRepo.Create(ctx, event)
+	if err != nil {
+		return nil, err
+	}
 	return event, nil
 }
 
@@ -262,13 +267,16 @@ func (s *eventService) SetSlots(ctx context.Context, eventID uuid.UUID, slots in
         return nil, err
     }
     
-    currentParticipants := len(participants)
-    if slots < currentParticipants {
-        return nil, ErrSlotsAlreadyFilled
-    }
+    guestCount := 0
+	for _, p := range participants {
+		if p.SystemRole == domain.RoleGuest {
+			guestCount++
+		}
+	}
 
     updates := map[string]interface{}{
         "slots":      slots,
+		"available_slots": slots - guestCount,
         "updated_at": time.Now(),
     }
 
@@ -295,12 +303,12 @@ func (s *eventService) OccupySlot(ctx context.Context, eventID uuid.UUID) error 
 
 // ReleaseSlot - освобождаем слот
 func (s *eventService) ReleaseSlot(ctx context.Context, eventID uuid.UUID) error {
-    result, err :=s.eventRepo.TakeSlot(ctx, eventID)
+    result, err :=s.eventRepo.FreeUpSlot(ctx, eventID)
 	if err != nil {
 		return err
 	}
 	if !result {
-		return err
+		return ErrNoSlotsToRelease 
 	}
     return nil
 }

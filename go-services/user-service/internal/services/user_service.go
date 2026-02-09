@@ -187,12 +187,12 @@ func (s *userService) Update(ctx context.Context, input domain.UpdateUserInput, 
 	CollectUpdates(updates, input.FirstName != nil, "firstName", input.FirstName)
 	CollectUpdates(updates, input.LastName != nil, "firstName", input.LastName)
 
-	if input.Passwrod != nil {
-		if len(*input.Passwrod) < 6 {
+	if input.Password != nil {
+		if len(*input.Password) < 6 {
 			return nil, ErrShortPassword
 		}
 
-		hashed, err := bcrypt.GenerateFromPassword([]byte(*input.Passwrod), bcrypt.DefaultCost)
+		hashed, err := bcrypt.GenerateFromPassword([]byte(*input.Password), bcrypt.DefaultCost)
 		if err != nil {
 			return nil, err
 		}

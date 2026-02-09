@@ -54,7 +54,7 @@ type User struct {
 type UpdateUserInput struct {
 	FirstName *string
 	LastName *string
-	Passwrod *string
+	Password *string
 }
 
 type Event struct {
@@ -63,7 +63,7 @@ type Event struct {
 	Title       string    `gorm:"not null;size:200;index"`
 	Description string    `gorm:"type:text"`
 	Slots		int 	  `gorm:"not null"`
-	AvailableSlots int	  `gorm:"not null;check:available_slots <= slots""`
+	AvailableSlots int	  `gorm:"not null;check:available_slots <= slots"`
 	DateFrom    time.Time `gorm:"index"`
 	DateTo		time.Time `gorm:"index"`
 	Location    string    `gorm:"size:255"`
@@ -118,8 +118,10 @@ type UserWithEventsDTO struct {
 type EventSummaryDTO struct {
 	EventID    uuid.UUID       `json:"event_id"`
 	Title      string          `json:"title"`
-	DateFrom   time.Time       `json:"date"`
-	DateTo   time.Time       `json:"date"`
+	AvailableSlots int    `json:"available_slots"`
+    TotalSlots     int    `json:"total_slots"`
+	DateFrom   time.Time       `json:"date_from"`
+	DateTo   time.Time       `json:"date_to"`
 	SystemRole SystemRole      `json:"system_role"`
 	JoinedAt   time.Time       `json:"joined_at"`
 }

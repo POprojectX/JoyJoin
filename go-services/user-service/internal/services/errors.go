@@ -33,4 +33,6 @@ var (
     ErrEventFull             = errors.New("event is full")
     ErrInvalidSlots          = errors.New("slots must be greater than 0")
     ErrSlotsAlreadyFilled    = errors.New("cannot reduce slots below current participants count")
+	ErrNoSlotsToRelease 	 = errors.New("no slots to release or event not found")
+	ErrToReleaseSlot		 = errors.New("error to release slot")
 )

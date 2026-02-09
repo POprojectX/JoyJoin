@@ -24,6 +24,10 @@ type ParticipantRepository interface {
 	GetUserRoleInEvent(ctx context.Context, userID, eventID uuid.UUID) (domain.SystemRole, error)
 	IsUserOwner(ctx context.Context, userID, eventID uuid.UUID) (bool, error)
 	HasAnyRole(ctx context.Context, userID, eventID uuid.UUID, roles ...domain.SystemRole) (bool, error)
+
+	GetByEventID(ctx context.Context, eventID uuid.UUID) ([]domain.EventParticipant, error)
+	GetByUserID(ctx context.Context, userID uuid.UUID) ([]domain.EventParticipant, error)
+	CountOwners(ctx context.Context, eventID uuid.UUID) (int64, error)
 }
 
 type participantRepo struct {

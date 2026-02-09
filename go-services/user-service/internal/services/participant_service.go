@@ -128,97 +128,126 @@ func (s *participantService) AssignRole(
 		return ErrTooManyRequests
 	}
 
-	event, err := s.eventRepo.GetByID(ctx, eventID)
-	if err != nil {
-		return err
-	}
-	if event == nil {
-		return ErrEventNotFound
-	}
-	if event.Status == domain.StatusCompleted || event.Status == domain.StatusCancelled {
-		return ErrCantBeAssignToEvent
-	}
-	HasFreeSlots, err := s.eventRepo.HasAvailableSlots(ctx, eventID)
-	if err != nil {
-		return err
-	}
-	if !HasFreeSlots {
-		return ErrNoSlotsAvailable
-	}
 	if err := ctx.Err(); err != nil {
-		return ErrContextCancelled
-	}
+        return ErrContextCancelled
+    }
 
-	if role == domain.RoleGuest {
-		hasSlots, err := s.eventRepo.HasAvailableSlots(ctx, eventID)
-		if err != nil {
-			return err
-		}
-		if !hasSlots {
-			return ErrNoSlotsAvailable
-		}
-	}
-	
-	type result struct {
-		hasRight bool
-		err      error
-		user     *domain.User
-	}
+	// Проверяем валидность роли для слотов (только Guest занимает слот)
+    needsSlot := role == domain.RoleGuest
 
-	rightsChan := make(chan result, 1)
-	userChan := make(chan result, 1)
+    // Параллельные проверки: права + существование пользователя + событие
+    type checkResult struct {
+        hasRight bool
+        user     *domain.User
+        event    *domain.Event
+        err      error
+    }
 
-	go func() {
-		hasRight, err := s.participantRepo.HasAnyRole(ctx, requesterID, eventID, domain.RoleOwner, domain.RoleOrganizer)
-		rightsChan <- result{hasRight: hasRight, err: err}
-	}()
+    resultChan := make(chan checkResult, 1)
 
-	go func() {
-		user, err := s.userRepo.GetByID(ctx, targetUserID)
-		userChan <- result{user: user, err: err}
-	}()
+    go func() {
+        var res checkResult
+        
+        // Проверяем права
+        hasRight, err := s.participantRepo.HasAnyRole(ctx, requesterID, eventID, domain.RoleOwner, domain.RoleOrganizer)
+        if err != nil || !hasRight {
+            res.err = err
+            if !hasRight && err == nil {
+                res.err = ErrNotOwner
+            }
+            resultChan <- res
+            return
+        }
 
-	rightsRes := <-rightsChan
-	if rightsRes.err != nil {
-		return rightsRes.err
-	}
-	if !rightsRes.hasRight {
-		return ErrNotOwner
-	}
+        // Проверяем пользователя
+        user, err := s.userRepo.GetByID(ctx, targetUserID)
+        if err != nil {
+            res.err = err
+            resultChan <- res
+            return
+        }
+        if user == nil {
+            res.err = ErrUserNotFound
+            resultChan <- res
+            return
+        }
+        res.user = user
 
-	userRes := <-userChan
-	if userRes.err != nil {
-		return userRes.err
-	}
-	if userRes.user == nil {
-		return ErrUserNotFound
-	}
+        // Проверяем событие и статус
+        event, err := s.eventRepo.GetByID(ctx, eventID)
+        if err != nil {
+            res.err = err
+            resultChan <- res
+            return
+        }
+        if event == nil {
+            res.err = ErrEventNotFound
+            resultChan <- res
+            return
+        }
+        if event.Status == domain.StatusCompleted || event.Status == domain.StatusCancelled {
+            res.err = ErrCantBeAssignToEvent
+            resultChan <- res
+            return
+        }
+        res.event = event
 
-	existingRole, err := s.participantRepo.GetUserRoleInEvent(ctx, targetUserID, eventID)
-	if err == nil && existingRole != "" {
-		return ErrAlreadyParticipant
-	}
+        // Проверяем, не участник ли уже
+        existingRole, err := s.participantRepo.GetUserRoleInEvent(ctx, targetUserID, eventID)
+        if err == nil && existingRole != "" {
+            res.err = ErrAlreadyParticipant
+            resultChan <- res
+            return
+        }
 
-	if profRoleID != nil && role != domain.RoleStaff {
-		return ErrInvalidRole
-	}
+        res.hasRight = true
+        resultChan <- res
+    }()
 
-	participant := &domain.EventParticipant{
-		UserID:             targetUserID,
-		EventID:            eventID,
-		SystemRole:         role,
-		ProfessionalRoleID: profRoleID,
-		Notes:              "Added by " + requesterID.String(),
-	}
+    check := <-resultChan
+    if check.err != nil {
+        return check.err
+    }
 
-	if err := s.participantRepo.Create(ctx, participant); err != nil {
-		if isDuplicateError(err) {
-			return ErrAlreadyParticipant
-		}
-		return err
-	}
+    // Валидация профессиональной роли
+    if profRoleID != nil && role != domain.RoleStaff {
+        return ErrInvalidRole
+    }
 
-	return nil
+    // === КЛЮЧЕВОЙ МОМЕНТ: атомарное занятие слота ===
+    // Если нужен слот — занимаем ДО создания участника
+    if needsSlot {
+        ok, err := s.eventRepo.TakeSlot(ctx, eventID)
+        if err != nil {
+            return err
+        }
+        if !ok {
+            return ErrNoSlotsAvailable
+        }
+    }
+
+    // Создаём участника
+    participant := &domain.EventParticipant{
+        UserID:             targetUserID,
+        EventID:            eventID,
+        SystemRole:         role,
+        ProfessionalRoleID: profRoleID,
+        Notes:              "Added by " + requesterID.String(),
+    }
+
+    if err := s.participantRepo.Create(ctx, participant); err != nil {
+        // ОТКАТ: если создать не удалось, но слот заняли — освобождаем
+        if needsSlot {
+            // Асинхронно освобождаем, не блокируем ответ
+            go s.eventRepo.FreeUpSlot(context.Background(), eventID)
+        }
+        if isDuplicateError(err) {
+            return ErrAlreadyParticipant
+        }
+        return err
+    }
+
+    return nil
 }
 
 func (s *participantService) ChangeRole(
@@ -295,7 +324,28 @@ func (s *participantService) selfRemove(ctx context.Context, userID, eventID uui
 		}
 	}
 
-	return s.participantRepo.RemoveFromEvent(ctx, userID, eventID)
+	if err := s.participantRepo.RemoveFromEvent(ctx, userID, eventID); err != nil {
+        return err
+    }
+	
+	errChan := make(chan error, 1)
+    // Освобождаем слот только если был Guest
+    if role == domain.RoleGuest {
+        // Не блокируем ответ, логируем ошибку если что
+        go func() {
+            if _, err := s.eventRepo.FreeUpSlot(context.Background(), eventID); err != nil {
+				errChan <- ErrToReleaseSlot
+            }else {
+				errChan <- nil
+			}
+        }()
+
+		if err := <-errChan; err != nil {
+			return err
+		}
+    }
+
+	return nil
 }
 
 func (s *participantService) removeOther(ctx context.Context, requesterID, targetUserID, eventID uuid.UUID) error {
@@ -323,7 +373,26 @@ func (s *participantService) removeOther(ctx context.Context, requesterID, targe
 		return ErrNotOwner
 	}
 
-	return s.participantRepo.RemoveFromEvent(ctx, targetUserID, eventID)
+	if err := s.participantRepo.RemoveFromEvent(ctx, targetUserID, eventID); err != nil {
+        return err
+    }
+	
+	errChan := make(chan error, 1)
+	if targetRole == domain.RoleGuest {
+		go func() {
+			if _, err := s.eventRepo.FreeUpSlot(context.Background(), eventID); err != nil {
+				errChan <- ErrToReleaseSlot
+			}else {
+				errChan <- nil
+			}
+		}()
+
+		if err := <-errChan; err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // ==================== BATCH ОПЕРАЦИИ ====================
