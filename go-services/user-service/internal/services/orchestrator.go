@@ -7,7 +7,7 @@ import (
 	"user-service/internal/domain"
 
 	"github.com/google/uuid"
-	"github.com/sony/gobreaker"
+	"golang.org/x/sync/errgroup"
 	"golang.org/x/time/rate"
 )
 
@@ -15,7 +15,7 @@ type OrchestratorService interface {
 	// ==================== AUTH & USER ====================
 	RegisterAndCreateProfile(ctx context.Context, email, password, firstName, lastName string) (*domain.UserWithEventsDTO, string, error) // возвращает user + JWT
 	LoginAndGetProfile(ctx context.Context, email, password string) (*domain.UserWithEventsDTO, string, error)
-	GetUserFullProfile(ctx context.Context, userID uuid.UUID) (*domain.UserWithEventsDTO, error)
+	GetUserFullProfile(ctx context.Context, userID uuid.UUID) (*domain.User, error)
 	DeleteUserAndCleanup(ctx context.Context, userID uuid.UUID) error // удаляет пользователя + все участия
 
 	// ==================== EVENT MANAGEMENT ====================
@@ -66,7 +66,7 @@ type orchestratorService struct {
     
     orchestratorLimiter *rate.Limiter // ограничиваем общее количество запросов к сервису.
     
-    breaker *gobreaker.CircuitBreaker // некий надзиратель метода. Его задача такая: если метод не выдает ошибки при запросах - мы пропускаем все следуйщие запросы. 
+    //breaker *gobreaker.CircuitBreaker // некий надзиратель метода. Его задача такая: если метод не выдает ошибки при запросах - мы пропускаем все следуйщие запросы. 
 	// Если метод выдал ошибку при n-ым количестве запросов ПОДРЯД, тогда breaker видет что метод "болен" и просто всем последуйщим запросам выдает поментальную ошибку без лишней траны на обработку запросов больным методом. 
     
     taskQueue chan func()  // канал для воркеров (одновременно выполняющихся задач) для WorkerPool
@@ -90,16 +90,16 @@ func NewEventOrchestrator(
         semaphores:         make(map[string]chan struct{}), //буфер на 5 запросов одновременно к одноум ивенту
         distributedLocks:   make(map[string]*sync.RWMutex),
         orchestratorLimiter: rate.NewLimiter(rate.Every(time.Second), 10000), // 10к req/sec на сервак
-        breaker: gobreaker.NewCircuitBreaker(gobreaker.Settings{
-            Name:        "orchestrator",
-            MaxRequests: 6, // 6 прав на ошибку у ивента
-            Interval:    10 * time.Second,
-            Timeout:     30 * time.Second,
-            ReadyToTrip: func(counts gobreaker.Counts) bool {
-                failureRatio := float64(counts.TotalFailures) / float64(counts.Requests)
-                return counts.Requests >= 3 && failureRatio >= 0.6
-            },
-        }),
+        // breaker: gobreaker.NewCircuitBreaker(gobreaker.Settings{
+        //     Name:        "orchestrator",
+        //     MaxRequests: 6, // 6 прав на ошибку у ивента
+        //     Interval:    10 * time.Second,
+        //     Timeout:     30 * time.Second,
+        //     ReadyToTrip: func(counts gobreaker.Counts) bool {
+        //         failureRatio := float64(counts.TotalFailures) / float64(counts.Requests)
+        //         return counts.Requests >= 3 && failureRatio >= 0.6
+        //     },
+        // }),
         taskQueue: make(chan func(), 10000), // 10к воркеров
 		rateMap: make(map[string]time.Time),
 		rateLimit: time.Second, // 1 секунда кд для запроса у пользователя
@@ -110,8 +110,6 @@ func NewEventOrchestrator(
 }
 
 func (o *orchestratorService) RegisterAndCreateProfile(ctx context.Context, email, password, firstName, lastName string) (*domain.UserWithEventsDTO, string, error) {
-	// orchestratorLimiter, breaker, taskQueue, rateMap, rateMu
-	
 	// проверка на запросы сервака
 	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
 		return nil, "", ErrTooManyRequests
@@ -120,29 +118,148 @@ func (o *orchestratorService) RegisterAndCreateProfile(ctx context.Context, emai
 	if err := ctx.Err(); err != nil {
 		return nil, "", ErrContextCancelled
 	}
-	// проверка на кд по мылу
-	if !o.checkRateLimitPerEmail(email) {
-		return nil, "", ErrTooManyRequests
-	}
-	// проверка 
 
 	user, err := o.userService.Register(ctx, email, password, firstName, lastName)
 	if err != nil {
 		return nil, "", err
 	}
-	jwt, err := o.authService.GenerateToken(user.ID) 
-	if err != nil {
-		return nil, "", err
-	}
-	userWithEvents, err := o.userService.GetUserWithEvents(ctx, user.ID)
-	if err != nil {
+
+	var (
+		jwt string
+		dto *domain.UserWithEventsDTO
+	)
+	g, ctx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		var err error
+		jwt, err = o.authService.GenerateToken(user.ID)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		dto, err = o.userService.GetUserWithEvents(ctx, user.ID)
+		return err
+	})
+
+	if err := g.Wait(); err != nil {
+		if jwt == "" {
+			return dto, "", err
+		}
+		if dto == nil {
+			localDto := &domain.UserWithEventsDTO{
+				ID : user.ID,
+				Email: user.Email,
+				FirstName: user.FirstName,
+				LastName: user.LastName,
+				Events: nil,
+			}
+			return localDto, "", err
+		}
 		return nil, "", err
 	}
 
-	return userWithEvents, jwt, nil
+	return dto, jwt, nil
 }
 
+func (o *orchestratorService) LoginAndGetProfile(ctx context.Context, email, password string) (*domain.UserWithEventsDTO, string, error) {
+	// проверка на запросы сервака
+	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
+		return nil, "", ErrTooManyRequests
+	}
+	// проверка на ошибки в context
+	if err := ctx.Err(); err != nil {
+		return nil, "", ErrContextCancelled
+	}
 
+	user, err := o.userService.Login(ctx, email, password)
+	if err != nil {
+		return nil, "", err
+	}
+	g, ctx := errgroup.WithContext(ctx)
+	var (
+		jwt string
+		dto *domain.UserWithEventsDTO
+	)
+	g.Go(func() error {
+		var err error
+		jwt, err = o.authService.GenerateToken(user.ID)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		dto, err = o.userService.GetUserWithEvents(ctx, user.ID)
+		return err
+	})
+
+	if err := g.Wait(); err != nil {
+		if jwt == "" {
+			return dto, "", err
+		}
+		if dto == nil {
+			localDto := &domain.UserWithEventsDTO{
+				ID : user.ID,
+				Email: user.Email,
+				FirstName: user.FirstName,
+				LastName: user.LastName,
+				Events: nil,
+			}
+			return localDto, "", err
+		}
+		return nil, "", err
+	}
+
+	return dto, jwt, nil
+}
+
+func (o *orchestratorService) GetUserFullProfile(ctx context.Context, userID uuid.UUID) (*domain.User, error) {
+	// проверка на запросы сервака
+	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
+		return nil, ErrTooManyRequests
+	}
+	// проверка на ошибки в context
+	if err := ctx.Err(); err != nil {
+		return nil, ErrContextCancelled
+	}
+
+	return o.userService.GetByID(ctx, userID)
+}
+
+func (o *orchestratorService) DeleteUserAndCleanup(ctx context.Context, userID uuid.UUID) error {
+	// проверка на запросы сервака
+	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
+		return ErrTooManyRequests
+	}
+	// проверка на ошибки в context
+	if err := ctx.Err(); err != nil {
+		return ErrContextCancelled
+	}
+
+	UserWithEventsDTO, err := o.userService.GetUserWithEvents(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	listOfEvents := UserWithEventsDTO.Events
+	g, ctx := errgroup.WithContext(ctx)
+
+	for _, event := range listOfEvents {
+		eventID := event.EventID
+		g.Go(func() error {
+			return o.participantService.SelfRemove(ctx, userID, eventID)
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return  err
+	}
+	deletedUser, err := o.userService.Delete(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if deletedUser != nil {
+		return ErrDeleteUserFailed
+	}
+	return nil
+}
 
 //используем утилиты
 func (o *orchestratorService) starterWorkerPool(workers int) {
@@ -151,6 +268,27 @@ func (o *orchestratorService) starterWorkerPool(workers int) {
 
 func (o *orchestratorService) checkRateLimitPerEmail(email string) bool {
 	return CheckRateLimitPerEmail(email, &o.rateMu, o.rateMap)
+}
+
+// доп функции для баланса запросоввы
+func (o *orchestratorService) getDistributedLock(eventID string) *sync.RWMutex {
+	o.lockMu.RLock()
+	if lock, exists := o.distributedLocks[eventID]; exists {
+		o.lockMu.RUnlock()
+		return lock
+	}
+	o.lockMu.RUnlock()
+
+	o.lockMu.Lock()
+	defer o.lockMu.Unlock()
+	
+	if lock, ok := o.distributedLocks[eventID]; ok {
+		return lock
+	}
+
+	lock := &sync.RWMutex{}
+	o.distributedLocks[eventID] = lock
+	return lock
 }
 
 func (o *orchestratorService) getEventSemaphore(eventID string) chan struct{} {
@@ -172,24 +310,4 @@ func (o *orchestratorService) getEventSemaphore(eventID string) chan struct{} {
 	o.semaphores[eventID] = sem
 
 	return sem
-}
-
-func (o *orchestratorService) getDistributedLock(eventID string) *sync.RWMutex {
-	o.lockMu.RLock()
-	if lock, exists := o.distributedLocks[eventID]; exists {
-		o.lockMu.RUnlock()
-		return lock
-	}
-	o.lockMu.RUnlock()
-
-	o.lockMu.Lock()
-	defer o.lockMu.Unlock()
-	
-	if lock, ok := o.distributedLocks[eventID]; ok {
-		return lock
-	}
-
-	lock := &sync.RWMutex{}
-	o.distributedLocks[eventID] = lock
-	return lock
-}
+} 

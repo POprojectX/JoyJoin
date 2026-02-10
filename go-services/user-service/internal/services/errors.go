@@ -35,4 +35,5 @@ var (
     ErrSlotsAlreadyFilled    = errors.New("cannot reduce slots below current participants count")
 	ErrNoSlotsToRelease 	 = errors.New("no slots to release or event not found")
 	ErrToReleaseSlot		 = errors.New("error to release slot")
+	ErrDeleteUserFailed 	 = errors.New("failed to delete user")
 )

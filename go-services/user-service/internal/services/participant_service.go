@@ -19,6 +19,7 @@ type ParticipantService interface {
 	AssignRole(ctx context.Context, requesterID, targetUserID, eventID uuid.UUID, role domain.SystemRole, profRoleID *uint) error
 	ChangeRole(ctx context.Context, requesterID uuid.UUID, participantID uint, newRole domain.SystemRole) error
 	RemoveFromEvent(ctx context.Context, requesterID, targetUserID, eventID uuid.UUID) error
+	SelfRemove(ctx context.Context, userID, eventID uuid.UUID) error
 	
 	GetUserRoleInEvent(ctx context.Context, userID, eventID uuid.UUID) (domain.SystemRole, error)
 	IsUserOwner(ctx context.Context, userID, eventID uuid.UUID) (bool, error)
@@ -302,26 +303,16 @@ func (s *participantService) RemoveFromEvent(
 	}
 
 	if requesterID == targetUserID {
-		return s.selfRemove(ctx, requesterID, eventID)
+		return s.SelfRemove(ctx, requesterID, eventID)
 	}
 
 	return s.removeOther(ctx, requesterID, targetUserID, eventID)
 }
 
-func (s *participantService) selfRemove(ctx context.Context, userID, eventID uuid.UUID) error {
+func (s *participantService) SelfRemove(ctx context.Context, userID, eventID uuid.UUID) error {
 	role, err := s.participantRepo.GetUserRoleInEvent(ctx, userID, eventID)
 	if err != nil {
 		return err
-	}
-
-	if role == domain.RoleOwner {
-		isLast, err := s.isLastOwner(ctx, eventID, userID)
-		if err != nil {
-			return err
-		}
-		if isLast {
-			return ErrLastOwnerCannotLeave
-		}
 	}
 
 	if err := s.participantRepo.RemoveFromEvent(ctx, userID, eventID); err != nil {
