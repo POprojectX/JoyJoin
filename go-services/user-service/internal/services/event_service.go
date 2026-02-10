@@ -16,6 +16,9 @@ type EventService interface {
 	Update(ctx context.Context, input domain.UpdateEventInput, id uuid.UUID) (*domain.Event, error)
 	Delete(ctx context.Context, id uuid.UUID) (*domain.Event, error)
 	ListByDateRange(ctx context.Context, start, end time.Time) ([]domain.Event, error)
+	PublishEvent(ctx context.Context, id uuid.UUID) (*domain.Event, error)
+	DraftEvent(ctx context.Context, id uuid.UUID) (*domain.Event, error)
+	CancelledEvent(ctx context.Context, id uuid.UUID) (*domain.Event, error)
 	// Получить всех участников события с их ролями
 	GetEventParticipants(ctx context.Context, eventID uuid.UUID) ([]domain.EventParticipant, error)
 	// Получить события по системной роли пользователя

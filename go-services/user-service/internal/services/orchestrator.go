@@ -34,8 +34,6 @@ type OrchestratorService interface {
 	GetEventFullDetails(ctx context.Context, eventID, requesterID uuid.UUID) (*EventFullDetailsDTO, error) // ивент + участники + права запрашивающего
 	TransferOwnership(ctx context.Context, currentOwnerID, newOwnerID, eventID uuid.UUID) error            // смена владельца с проверками
 
-	// ==================== ADMIN & BATCH ====================
-	CleanupCancelledEvents(ctx context.Context, olderThan time.Duration) (int, error) // фоновая задача
 }
 
 type BulkAssignmentResult struct {
@@ -190,7 +188,7 @@ func (o *orchestratorService) LoginAndGetProfile(ctx context.Context, email, pas
 		dto, err = o.userService.GetUserWithEvents(ctx, user.ID)
 		return err
 	})
-
+                                     
 	if err := g.Wait(); err != nil {
 		if jwt == "" {
 			return dto, "", err
@@ -261,6 +259,79 @@ func (o *orchestratorService) DeleteUserAndCleanup(ctx context.Context, userID u
 	return nil
 }
 
+func (o *orchestratorService) CreateEventWithOwner(ctx context.Context, title, description, location string, slots int, dateFrom, dateTo time.Time, ownerID uuid.UUID) (*domain.Event, error) {
+	// проверка на запросы сервака
+	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
+		return nil, ErrTooManyRequests
+	}
+	// проверка на ошибки в context
+	if err := ctx.Err(); err != nil {
+		return nil, ErrContextCancelled
+	}
+	// проверка на кд по email
+	if !o.checkRateLimitPerEmail(ownerID.String()) {
+        return nil, ErrTooManyRequests
+    }
+
+	event, err := o.eventService.Create(ctx, title, description, location, slots, dateFrom, dateTo, ownerID)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err != nil {
+			o.eventService.Delete(ctx, event.ID)
+		}
+	}()
+
+	participant := &domain.EventParticipant{
+		UserID:   ownerID,
+		EventID:  event.ID,
+		SystemRole: domain.RoleOwner,
+		JoinedAt: time.Now(),
+		Notes: "Creator of the event.",
+	}
+	if err := o.participantService.Create(ctx, participant); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
+func (o *orchestratorService) PublishEventAtomic(ctx context.Context, eventID, requesterID uuid.UUID) (*domain.Event, error) {
+	// проверка на запросы сервака
+	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
+		return nil, ErrTooManyRequests
+	}
+	// проверка на ошибки в context
+	if err := ctx.Err(); err != nil {
+		return nil, ErrContextCancelled
+	}
+	// проверка на кд по email
+	if !o.checkRateLimitPerEmail(requesterID.String()) {
+		return nil, ErrTooManyRequests
+	}
+	// локамем наш ивент что бы если вдруг другой овнер решил его опопубликовать в то же время, то второй запрос будет ждать пока первый не закончится
+	lock := o.getDistributedLock(eventID.String())
+	lock.Lock()
+	defer lock.Unlock()
+
+	isOwner, err := o.participantService.HasAnyRole(ctx, requesterID, eventID, domain.RoleOwner)
+	if err != nil {
+		return nil, err
+	}
+	if !isOwner {
+		return nil, ErrCantPublishEvent
+	}
+
+	event, err := o.eventService.PublishEvent(ctx, eventID)
+	if err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
+func (o *orchestratorService) CancelEventWithCleanup(ctx context.Context, eventID, requesterID uuid.UUID) error {
+
+}
 //используем утилиты
 func (o *orchestratorService) starterWorkerPool(workers int) {
 	StarterWorkerPool(workers, o.taskQueue)
