@@ -36,4 +36,6 @@ var (
 	ErrNoSlotsToRelease 	 = errors.New("no slots to release or event not found")
 	ErrToReleaseSlot		 = errors.New("error to release slot")
 	ErrDeleteUserFailed 	 = errors.New("failed to delete user")
+	ErrToRemoveUserFromEvent = errors.New("error to remove user from event")
+	ErrCantDeleteEvent 		 = errors.New("cant delete event")
 )

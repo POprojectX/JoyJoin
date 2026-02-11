@@ -24,6 +24,7 @@ type ParticipantService interface {
 	GetUserRoleInEvent(ctx context.Context, userID, eventID uuid.UUID) (domain.SystemRole, error)
 	IsUserOwner(ctx context.Context, userID, eventID uuid.UUID) (bool, error)
 	HasAnyRole(ctx context.Context, userID, eventID uuid.UUID, roles ...domain.SystemRole) (bool, error)
+ 	GetParticipantByUserID(ctx context.Context, userID, eventID uuid.UUID) (*domain.EventParticipant, error)
 	
 	// Batch операции
 	AssignRolesBulk(ctx context.Context, requesterID, eventID uuid.UUID, assignments []RoleAssignment) []BulkResult
@@ -384,6 +385,24 @@ func (s *participantService) removeOther(ctx context.Context, requesterID, targe
 	}
 
 	return nil
+}
+
+func (s *participantService) GetParticipantByUserID(ctx context.Context, userID, eventID uuid.UUID) (*domain.EventParticipant, error) {
+	var participant *domain.EventParticipant
+	listOfParticipants, err := s.participantRepo.GetByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	for _, p := range listOfParticipants {
+		if p.EventID == eventID {
+			participant = &p
+			break
+		}
+	}
+	if participant == nil {
+		return nil, ErrParticipantNotFound
+	}
+	return participant, nil
 }
 
 // ==================== BATCH ОПЕРАЦИИ ====================

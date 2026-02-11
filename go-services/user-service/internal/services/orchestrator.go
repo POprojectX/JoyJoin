@@ -400,6 +400,166 @@ func (o *orchestratorService) CancelEventWithCleanup(ctx context.Context, eventI
 
 	return nil
 }
+
+func (o *orchestratorService) DeleteEventWithPermissions(ctx context.Context, eventID, requesterID uuid.UUID) error {
+	// проверка на запросы сервака
+	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
+		return ErrTooManyRequests
+	}
+	// проверка на ошибки в context
+	if err := ctx.Err(); err != nil {
+		return ErrContextCancelled
+	}
+	// проверка на кд по email
+	if !o.checkRateLimitPerEmail(requesterID.String()) {
+		return ErrTooManyRequests
+	}
+
+	lock := o.getDistributedLock(eventID.String())
+	lock.Lock()
+	defer lock.Unlock()
+
+	isOwner, err := o.participantService.HasAnyRole(ctx, requesterID, eventID, domain.RoleOwner)
+	if err != nil {
+		return err
+	}
+	if !isOwner {
+		return ErrCantDeleteEvent
+	}
+	_ , err = o.eventService.Delete(ctx, eventID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (o *orchestratorService) GetEventFullDetails(ctx context.Context, eventID, requesterID uuid.UUID) (*domain.SystemRole, []domain.EventParticipant, error) {
+	// проверка на запросы сервака
+	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
+		return nil, nil, ErrTooManyRequests
+	}
+	// проверка на ошибки в context
+	if err := ctx.Err(); err != nil {
+		return nil, nil, ErrContextCancelled
+	}
+	// проверка на кд по email
+	if !o.checkRateLimitPerEmail(requesterID.String()) {
+		return nil, nil,ErrTooManyRequests
+	}
+	sem := o.getEventSemaphore(eventID.String())
+	sem <- struct{}{}
+	defer func() {<-sem}()
+
+	_, err := o.eventService.GetByID(ctx, eventID)
+	if err != nil {
+		return nil, nil, err
+	}
+	
+	var (
+		role domain.SystemRole
+		litParticipants []domain.EventParticipant
+	)
+	g, ctx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		var err error
+		role, err = o.participantService.GetUserRoleInEvent(ctx, requesterID, eventID)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		var err error
+		litParticipants, err = o.eventService.GetEventParticipants(ctx, eventID)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err := g.Wait(); err != nil {
+		return nil, nil, err
+	}
+
+	return &role, litParticipants, nil
+}
+
+func (o *orchestratorService) TransferOwnership(ctx context.Context, currentOwnerID, newOwnerID, eventID uuid.UUID) error {
+	// проверка на запросы сервака
+	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
+		return ErrTooManyRequests
+	}
+	// проверка на ошибки в context
+	if err := ctx.Err(); err != nil {
+		return ErrContextCancelled
+	}
+	// проверка на кд по email
+	if !o.checkRateLimitPerEmail(currentOwnerID.String()) {
+		return ErrTooManyRequests
+	}
+	sem := o.getEventSemaphore(eventID.String())
+	sem <- struct{}{}
+	defer func() {<-sem}()
+	
+	g, ctx := errgroup.WithContext(ctx)
+
+	var (participant *domain.EventParticipant)
+	g.Go(func() error {
+		isRequesterOwner, err := o.participantService.HasAnyRole(ctx, currentOwnerID, eventID, domain.RoleOwner)
+		if err != nil {
+			return err
+		}
+		if !isRequesterOwner {
+			return ErrNotOwner
+		}
+		return nil
+	})
+	g.Go(func() error {
+		var err error
+		participant, err = o.participantService.GetParticipantByUserID(ctx, newOwnerID, eventID)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err := g.Wait(); err != nil {
+		return err
+	}
+	g2, ctx := errgroup.WithContext(ctx)
+	g2.Go(func() error {
+		err := o.participantService.ChangeRole(ctx, currentOwnerID, participant.ID, domain.RoleOwner)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err := g2.Wait(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (o *orchestratorService) JoinEventAsGuest(ctx context.Context, userID, eventID uuid.UUID) error {
+	// проверка на запросы сервака
+	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
+		return ErrTooManyRequests
+	}
+	// проверка на ошибки в context
+	if err := ctx.Err(); err != nil {
+		return ErrContextCancelled
+	}
+	// проверка на кд по email
+	if !o.checkRateLimitPerEmail(userID.String()) {
+		return ErrTooManyRequests
+	}
+	sem := o.getEventSemaphore(eventID.String())
+	sem <- struct{}{}
+	defer func() {<-sem}()
+
+	//return o.participantService.AssignRole(ctx, userID, eventID, domain.RoleGuest, )
+}
+
 //используем утилиты
 func (o *orchestratorService) starterWorkerPool(workers int) {
 	StarterWorkerPool(workers, o.taskQueue)
