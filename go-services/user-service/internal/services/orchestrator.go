@@ -330,7 +330,75 @@ func (o *orchestratorService) PublishEventAtomic(ctx context.Context, eventID, r
 }
 
 func (o *orchestratorService) CancelEventWithCleanup(ctx context.Context, eventID, requesterID uuid.UUID) error {
+	// проверка на запросы сервака
+	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
+		return ErrTooManyRequests
+	}
+	// проверка на ошибки в context
+	if err := ctx.Err(); err != nil {
+		return ErrContextCancelled
+	}
+	// проверка на кд по email
+	if !o.checkRateLimitPerEmail(requesterID.String()) {
+		return ErrTooManyRequests
+	}
 
+	lock := o.getDistributedLock(eventID.String())
+	lock.Lock()
+	defer lock.Unlock()
+
+	g, ctx := errgroup.WithContext(ctx)
+	var eventData *domain.Event
+	
+	g.Go(func() error {
+		var err error
+		eventData, err = o.eventService.GetByID(ctx, eventID)
+		if err != nil {
+			return err
+		}
+		if eventData == nil {
+			return ErrEventNotFound
+		}
+		return nil
+	})
+	g.Go(func() error {
+		isOwner, err := o.participantService.HasAnyRole(ctx, requesterID, eventID, domain.RoleOwner)
+		if err != nil {
+			return err
+		}
+		if !isOwner {
+			return ErrCantCancelEvent
+		}
+		return nil
+	})
+	if err := g.Wait(); err != nil {
+		return err
+	}
+
+	wg := sync.WaitGroup{}
+	errChan := make(chan error, 1)
+	for _, users := range eventData.Participants {
+		if users.SystemRole == domain.RoleGuest || users.SystemRole == domain.RoleStaff {
+			continue
+		}
+		u := users
+		wg.Add(1)
+		go func() {
+			err := o.participantService.SelfRemove(ctx, u.UserID, eventID)
+			defer wg.Done()
+			if err != nil {
+				errChan <- err
+			}
+		}()
+		
+	}
+	wg.Wait()
+	close(errChan)
+	if len(errChan) > 0 {
+		return ErrToRemoveUserFromEvent
+	}
+
+	return nil
 }
 //используем утилиты
 func (o *orchestratorService) starterWorkerPool(workers int) {
