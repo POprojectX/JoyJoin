@@ -117,6 +117,9 @@ func (s *participantService) HasAnyRole(ctx context.Context, userID, eventID uui
 }
 
 //метод который приписывает кого то к ивенту + выдаем мы ему роль
+//важный костыль - тут если нам надо передавать в метод requesterid если это по приглашению/оплате 
+//если же пользователь сам решил попасть на ивент просто так, без приглашения/оплаты то requesterID должен быть nil
+//и если у нас event публичный - тогда requesterID nil подойдет, если же приватный то нет. 
 func (s *participantService) AssignRole(
 	ctx context.Context,
 	requesterID,
@@ -192,6 +195,11 @@ func (s *participantService) AssignRole(
             resultChan <- res
             return
         }
+		if role == domain.RoleGuest && event.Access == domain.AccessPrivate && requesterID == uuid.Nil {
+			res.err = ErrEventIsPrivate
+			resultChan <- res
+			return 
+		}
         res.event = event
 
         // Проверяем, не участник ли уже

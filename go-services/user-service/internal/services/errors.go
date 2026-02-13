@@ -38,4 +38,5 @@ var (
 	ErrDeleteUserFailed 	 = errors.New("failed to delete user")
 	ErrToRemoveUserFromEvent = errors.New("error to remove user from event")
 	ErrCantDeleteEvent 		 = errors.New("cant delete event")
+	ErrEventIsPrivate        = errors.New("event is private")
 )

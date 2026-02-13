@@ -11,7 +11,7 @@ import (
 )
 
 type EventService interface {
-	Create(ctx context.Context, title, description, location string, slots int,  dateFrom, dateTo time.Time, ownerID uuid.UUID) (*domain.Event, error)
+	Create(ctx context.Context, title, description, location string, slots int, dateFrom, dateTo time.Time, ownerID uuid.UUID, access domain.Access) (*domain.Event, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Event, error)
 	Update(ctx context.Context, input domain.UpdateEventInput, id uuid.UUID) (*domain.Event, error)
 	Delete(ctx context.Context, id uuid.UUID) (*domain.Event, error)
@@ -58,7 +58,7 @@ func NewEventService(r repo.EventRepository) EventService {
 	return s
 }
 
-func (s *eventService) Create(ctx context.Context, title, description, location string, slots int, dateFrom, dateTo time.Time, ownerID uuid.UUID) (*domain.Event, error) {
+func (s *eventService) Create(ctx context.Context, title, description, location string, slots int, dateFrom, dateTo time.Time, ownerID uuid.UUID, access domain.Access) (*domain.Event, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, ErrContextCancelled
 	}
@@ -68,6 +68,7 @@ func (s *eventService) Create(ctx context.Context, title, description, location 
 	
 	event := &domain.Event{
 		Status: domain.StatusDraft,
+		Access: access,
 		Title: title,
 		Description: description,
 		Slots: slots,
@@ -113,6 +114,7 @@ func (s *eventService) Update(ctx context.Context, input domain.UpdateEventInput
 	updates := make(map[string]interface{})
 	
 	// Чисто, читаемо, без дублирования
+	CollectUpdates(updates, input.Access != nil, "access", input.Access)
 	CollectUpdates(updates, input.Status != nil, "status", input.Status)
 	CollectUpdates(updates, input.Title != nil, "title", input.Title)
 	CollectUpdates(updates, input.Description != nil, "description", input.Description)
@@ -145,6 +147,7 @@ func (s *eventService) PublishEvent(ctx context.Context, id uuid.UUID) (*domain.
 	event.Status = domain.StatusAnnounced
 	input := domain.UpdateEventInput{
 		Status: &event.Status,
+		Access: &event.Access,
 		Title: &event.Title,
 		Description: &event.Description,
 		Location: &event.Location,
@@ -165,6 +168,7 @@ func (s *eventService) DraftEvent(ctx context.Context, id uuid.UUID) (*domain.Ev
 	event.Status = domain.StatusDraft
 	input := domain.UpdateEventInput{
 		Status: &event.Status,
+		Access: &event.Access,
 		Title: &event.Title,
 		Description: &event.Description,
 		Location: &event.Location,
@@ -186,6 +190,7 @@ func (s *eventService) CancelledEvent(ctx context.Context, id uuid.UUID) (*domai
 	}
 	
 	input := domain.UpdateEventInput{
+		Access: &event.Access,
 		Status: &event.Status,
 		Title: &event.Title,
 		Description: &event.Description,

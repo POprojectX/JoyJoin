@@ -8,7 +8,6 @@ import (
 
 //строгая типизация ролей, потом можно будет добавить еще какие то роли
 type SystemRole string
-
 const (
 	RoleOwner     SystemRole = "Owner"
 	RoleOrganizer SystemRole = "Organizer"
@@ -19,7 +18,6 @@ const (
 
 // тут все статусы ивента + обьяснения для чего они нужны
 type Status string
-
 const (
 	// черновик, виден ивент только тем кто работает над ним, например если еще ивент еще на садии планирования, логистики и тд. 
 	// Можно редачить, регаться нет
@@ -28,6 +26,12 @@ const (
 	StatusOngoing Status = "Ongoing" // ивент идет прямо сейчас, редачить нельзя место/дату, регаться уже нельзя
 	StatusCompleted Status = "Completed" // уже завершен, присойдениться нельзя
 	StatusCancelled Status = "Cancelled" // отменен, все активные роли аннулируются, отменить можно организатором
+)
+
+type Access string
+const (
+	AccessPublic Access = "Public"
+	AccessPrivate Access = "Private"
 )
 
 type ProfessionalRole struct {
@@ -60,6 +64,7 @@ type UpdateUserInput struct {
 type Event struct {
 	ID          uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
 	Status 		Status    `gorm:"not null"`
+	Access      Access    `gorm:"not null"` 
 	Title       string    `gorm:"not null;size:200;index"`
 	Description string    `gorm:"type:text"`
 	Slots		int 	  `gorm:"not null"`
@@ -76,6 +81,7 @@ type Event struct {
 
 //DTO чисто для метода Update, что бы сделать его более еластичным (возможность обновлять еластично поля)
 type UpdateEventInput struct {
+	Access	   *Access
 	Status		*Status
 	Title       *string
 	Description *string
@@ -117,6 +123,7 @@ type UserWithEventsDTO struct {
 }
 type EventSummaryDTO struct {
 	EventID    uuid.UUID       `json:"event_id"`
+	Access	   Access          `json:"access"`
 	Title      string          `json:"title"`
 	AvailableSlots int    `json:"available_slots"`
     TotalSlots     int    `json:"total_slots"`
