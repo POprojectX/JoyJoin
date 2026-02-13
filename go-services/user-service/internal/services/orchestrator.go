@@ -19,21 +19,22 @@ type OrchestratorService interface {
 	DeleteUserAndCleanup(ctx context.Context, userID uuid.UUID) error // удаляет пользователя + все участия
 
 	// ==================== EVENT MANAGEMENT ====================
-	CreateEventWithOwner(ctx context.Context, title, description, location string, slots int, dateFrom, dateTo time.Time, ownerID uuid.UUID) (*domain.Event, error)
+	CreateEventWithOwner(ctx context.Context, title, description, location string, slots int, dateFrom, dateTo time.Time, ownerID uuid.UUID, access domain.Access) (*domain.Event, error)
 	PublishEventAtomic(ctx context.Context, eventID, requesterID uuid.UUID) (*domain.Event, error) // проверяет права + публикует
 	CancelEventWithCleanup(ctx context.Context, eventID, requesterID uuid.UUID) error              // отмена + уведомление участников (async)
 	DeleteEventWithPermissions(ctx context.Context, eventID, requesterID uuid.UUID) error          // проверка прав + удаление
 
 	// ==================== PARTICIPANT & SLOTS ====================
-	JoinEventAsGuest(ctx context.Context, userID, eventID uuid.UUID) error                                              // занять слот + добавить участника (ATOMIC)
+	joinEventAsGuest(ctx context.Context, requesterID, userID, eventID uuid.UUID) error                                              // занять слот + добавить участника (ATOMIC)
+	JoinEventAsGuestPublic(ctx context.Context, userID, eventID uuid.UUID) error                                            // использование JoinEventAsGuest без приглашения
+	JoinEventAsGuestPrivate(ctx context.Context, requesterID, userID, eventID uuid.UUID) error                                            // использование JoinEventAsGuest по приглашению/оплате
 	LeaveEventAndFreeSlot(ctx context.Context, userID, eventID uuid.UUID) error                                         // удалить участника + освободить слот
-	AssignStaffWithSlotCheck(ctx context.Context, requesterID, targetUserID, eventID uuid.UUID, profRoleID *uint) error // добавить staff без слота
-	BulkAssignGuests(ctx context.Context, requesterID, eventID uuid.UUID, userIDs []uuid.UUID) []BulkAssignmentResult   // пакетное добавление с семафором
+	AssignStaffWithOutSlotCheck(ctx context.Context, requesterID, targetUserID, eventID uuid.UUID, profRoleID *uint) error // добавить staff без слота
+	//BulkAssignGuests(ctx context.Context, requesterID, eventID uuid.UUID, userIDs []uuid.UUID) []BulkAssignmentResult   // пакетное добавление с семафором
 
 	// ==================== COMPLEX QUERIES ====================
-	GetEventFullDetails(ctx context.Context, eventID, requesterID uuid.UUID) (*EventFullDetailsDTO, error) // ивент + участники + права запрашивающего
+	GetEventFullDetails(ctx context.Context, eventID, requesterID uuid.UUID) (*domain.SystemRole, []domain.EventParticipant, error) // ивент + участники + права запрашивающего
 	TransferOwnership(ctx context.Context, currentOwnerID, newOwnerID, eventID uuid.UUID) error            // смена владельца с проверками
-
 }
 
 type BulkAssignmentResult struct {
@@ -259,7 +260,7 @@ func (o *orchestratorService) DeleteUserAndCleanup(ctx context.Context, userID u
 	return nil
 }
 
-func (o *orchestratorService) CreateEventWithOwner(ctx context.Context, title, description, location string, slots int, dateFrom, dateTo time.Time, ownerID uuid.UUID) (*domain.Event, error) {
+func (o *orchestratorService) CreateEventWithOwner(ctx context.Context, title, description, location string, slots int, dateFrom, dateTo time.Time, ownerID uuid.UUID, access domain.Access) (*domain.Event, error) {
 	// проверка на запросы сервака
 	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
 		return nil, ErrTooManyRequests
@@ -273,7 +274,7 @@ func (o *orchestratorService) CreateEventWithOwner(ctx context.Context, title, d
         return nil, ErrTooManyRequests
     }
 
-	event, err := o.eventService.Create(ctx, title, description, location, slots, dateFrom, dateTo, ownerID)
+	event, err := o.eventService.Create(ctx, title, description, location, slots, dateFrom, dateTo, ownerID, access)
 	if err != nil {
 		return nil, err
 	}
@@ -540,7 +541,7 @@ func (o *orchestratorService) TransferOwnership(ctx context.Context, currentOwne
 	return nil
 }
 
-func (o *orchestratorService) JoinEventAsGuest(ctx context.Context, userID, eventID uuid.UUID) error {
+func (o *orchestratorService) joinEventAsGuest(ctx context.Context, requesterID, userID, eventID uuid.UUID) error {
 	// проверка на запросы сервака
 	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
 		return ErrTooManyRequests
@@ -556,10 +557,143 @@ func (o *orchestratorService) JoinEventAsGuest(ctx context.Context, userID, even
 	sem := o.getEventSemaphore(eventID.String())
 	sem <- struct{}{}
 	defer func() {<-sem}()
+	var isEvent *domain.Event
 
-	//return o.participantService.AssignRole(ctx, userID, eventID, domain.RoleGuest, )
+	g, ctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		var err error
+		isEvent, err = o.eventService.GetByID(ctx, eventID)
+		if err != nil {
+			return err
+		}
+		if isEvent == nil {
+			return ErrEventNotFound
+		}
+		return nil
+	})
+	g.Go(func() error {
+		isUser, err := o.userService.GetByID(ctx, userID)
+		if err != nil {
+			return err
+		}
+		if isUser == nil {
+			return ErrUserNotFound
+		}
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return err
+	}
+
+	return o.participantService.AssignRole(ctx, requesterID, userID, eventID, domain.RoleGuest, nil)
+}
+// доп методы для использования под разные доступы к ивентам
+func (o *orchestratorService) JoinEventAsGuestPublic(ctx context.Context, userID, eventID uuid.UUID) error {
+	return o.joinEventAsGuest(ctx, uuid.Nil, userID, eventID)
 }
 
+func (o *orchestratorService) JoinEventAsGuestPrivate(ctx context.Context, requesterID, userID, eventID uuid.UUID) error {
+	return o.joinEventAsGuest(ctx, requesterID, userID, eventID)
+}
+
+func (o *orchestratorService) LeaveEventAndFreeSlot(ctx context.Context, userID, eventID uuid.UUID) error {
+	// проверка на запросы сервака
+	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
+		return ErrTooManyRequests
+	}
+	// проверка на ошибки в context
+	if err := ctx.Err(); err != nil {
+		return ErrContextCancelled
+	}
+	// проверка на кд по email
+	if !o.checkRateLimitPerEmail(userID.String()) {
+		return ErrTooManyRequests
+	}
+
+	sem := o.getEventSemaphore(eventID.String())
+	sem <- struct{}{}
+	defer func() {<-sem}()
+
+	var isEvent *domain.Event
+
+	g, ctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		var err error
+		isEvent, err = o.eventService.GetByID(ctx, eventID)
+		if err != nil {
+			return err
+		}
+		if isEvent == nil {
+			return ErrEventNotFound
+		}
+		return nil
+	})
+	g.Go(func() error {
+		isUser, err := o.userService.GetByID(ctx, userID)
+		if err != nil {
+			return err
+		}
+		if isUser == nil {
+			return ErrUserNotFound
+		}
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return err
+	}
+
+	return o.participantService.SelfRemove(ctx, userID, eventID)
+}
+
+func (o *orchestratorService) AssignStaffWithOutSlotCheck(ctx context.Context, requesterID, targetUserID, eventID uuid.UUID, profRoleID *uint) error {
+	// проверка на запросы сервака
+	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
+		return ErrTooManyRequests
+	}
+	// проверка на ошибки в context
+	if err := ctx.Err(); err != nil {
+		return ErrContextCancelled
+	}
+	// проверка на кд по email
+	if !o.checkRateLimitPerEmail(targetUserID.String()) {
+		return ErrTooManyRequests
+	}
+	sem := o.getEventSemaphore(eventID.String())
+	sem <- struct{}{}
+	defer func() {<-sem}()
+	var isEvent *domain.Event
+
+	g, ctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		var err error
+		isEvent, err = o.eventService.GetByID(ctx, eventID)
+		if err != nil {
+			return err
+		}
+		if isEvent == nil {
+			return ErrEventNotFound
+		}
+		return nil
+	})
+	g.Go(func() error {
+		isUser, err := o.userService.GetByID(ctx, targetUserID)
+		if err != nil {
+			return err
+		}
+		if isUser == nil {
+			return ErrUserNotFound
+		}
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return err
+	}
+
+	return o.participantService.AssignRole(ctx, requesterID, targetUserID, eventID, domain.RoleStaff, profRoleID)
+}
 //используем утилиты
 func (o *orchestratorService) starterWorkerPool(workers int) {
 	StarterWorkerPool(workers, o.taskQueue)
