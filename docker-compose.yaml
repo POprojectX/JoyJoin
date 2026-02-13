@@ -13,23 +13,31 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: joyjoin_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     networks:
       - JoyJoin
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U user -d joyjoin_db
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   nginx:
     image: nginx:latest
     container_name: infr-nginx
     ports:
-      - "80:80"
+      - "8090:80"
     volumes:
       - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     networks:
       - JoyJoin
+    depends_on:
+      - user-service
 
   user-service:
-    build: ./services/user-service
+    build: ./go-services/user-service
     container_name: backend-user-service
     environment:
       - DB_HOST=db-user-service
@@ -38,15 +46,11 @@ services:
       - DB_NAME=joyjoin_db
       - DB_PORT=5432
     depends_on:
-      - db-user-service
+      db-user-service:
+        condition: service_healthy
     networks:
       - JoyJoin
-
-  frontend:
-    build: ./frontend
-    container_name: frontend
-    networks:
-      - JoyJoin
+    restart: on-failure
 
 volumes:
   postgres_data:
