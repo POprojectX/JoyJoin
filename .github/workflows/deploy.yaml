@@ -20,7 +20,7 @@ jobs:
           key: ${{ secrets.DEPLOY_KEY }}
           port: 22
           script: |
-            cd ~/JoyJoin
+            cd ~/JoyJoin/JoyJoin
             git fetch origin main
             git reset --hard origin/main
             docker-compose -f docker-compose.yml build
