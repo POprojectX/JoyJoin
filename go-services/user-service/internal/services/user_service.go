@@ -93,8 +93,11 @@ func (s *userService) Register(ctx context.Context, email, password, firstName, 
 		return nil, ErrShortPassword
 	}
 	exist, err := s.userRepo.GetByEmail(ctx, email)
-	if err != nil && exist.ID != uuid.Nil {
-		return nil, ErrEmailExists
+	if err != nil {
+		return nil, err
+	}
+	if exist != nil {
+		return nil, ErrEmailAlreadyExists
 	}
 
 

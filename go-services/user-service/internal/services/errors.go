@@ -39,4 +39,5 @@ var (
 	ErrToRemoveUserFromEvent = errors.New("error to remove user from event")
 	ErrCantDeleteEvent 		 = errors.New("cant delete event")
 	ErrEventIsPrivate        = errors.New("event is private")
+	ErrEmailAlreadyExists    = errors.New("email already exists")
 )

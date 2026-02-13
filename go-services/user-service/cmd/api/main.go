@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 	"user-service/internal/domain"
+	"user-service/internal/repo"
+	"user-service/internal/services"
 	"user-service/internal/storage"
 )
 
@@ -30,24 +34,35 @@ func main() {
 	}
 	log.Println("Database connected and migrated successfully!")
 
-	// Инициализация репозиториев
-	//userRepo := repo.NewUserRepository(db)
-	//eventRepo := repo.NewEventRepository(db)
-	//participantRepo := repo.NewParticipantRepository(db)
+	//Инициализация репозиториев
+	userRepo := repo.NewUserRepository(db, 10)
+	eventRepo := repo.NewEventRepository(db, 10)
+	participantRepo := repo.NewParticipantRepository(db)
 
-	// Инициализация репозиториев
-	// userRepo := repo.NewUserRepository(db, 10)
-	// eventRepo := repo.NewEventRepository(db, 10)
-	// participantRepo := repo.NewParticipantRepository(db)
+	// Инициализация сервисов
+	userService := services.NewUserService(userRepo)
+	eventService := services.NewEventService(eventRepo)
+	participantService := services.NewParticipantService(participantRepo, eventRepo, userRepo)
+	authService := services.NewAuthService(userRepo, getEnv("JWT_SECRET", "your-secret-key"))
 
-	// // Инициализация сервисов
-	// userService := services.NewUserService(userRepo)
-	// eventService := services.NewEventService(eventRepo)
-	// participantService := services.NewParticipantService(participantRepo, eventRepo, userRepo)
-	// authService := services.NewAuthService(userRepo, getEnv("JWT_SECRET", "your-secret-key"))
+	// Оркестратор
+	orchestrator := services.NewEventOrchestrator(userService, eventService, participantService, authService)
 
-	// // Оркестратор
-	// orchestrator := services.NewEventOrchestrator(userService, eventService, participantService, authService)
+	ctx := context.Background()
+
+	//Тестирование методов 
+	userDTO, tocken, err := orchestrator.RegisterAndCreateProfile(ctx, "test@example.com", "password", "Danil", "Kolbasenko")
+	if err != nil {
+		log.Printf("Error during registration: %v", err)
+	}
+	log.Printf("Registered user: %+v, Token: %s", userDTO, tocken)
+	time.Sleep(2 * time.Second)
+
+	userDTO2, tocken2, err := orchestrator.LoginAndGetProfile(ctx, "test@example.com", "password")
+	if err != nil {
+		log.Printf("Error during login: %v", err)
+	}
+	log.Printf("Logged in user: %+v, Token: %s", userDTO2, tocken2)
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
