@@ -23,5 +23,5 @@ jobs:
             cd ~/JoyJoin/JoyJoin
             git fetch origin main
             git reset --hard origin/main
-            docker-compose -f docker-compose.yml build
-            docker-compose -f docker-compose.yml up -d --remove-orphans
+            docker-compose -f docker-compose.yaml build
+            docker-compose -f docker-compose.yaml up -d --remove-orphans
