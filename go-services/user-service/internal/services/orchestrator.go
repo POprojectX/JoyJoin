@@ -88,7 +88,7 @@ func NewEventOrchestrator(
         authService:        as,
         semaphores:         make(map[string]chan struct{}), //буфер на 5 запросов одновременно к одноум ивенту
         distributedLocks:   make(map[string]*sync.RWMutex),
-        orchestratorLimiter: rate.NewLimiter(rate.Every(time.Second), 10000), // 10к req/sec на сервак
+        orchestratorLimiter: rate.NewLimiter(rate.Every(time.Second), 10000), // 10к req/sec на сервак йоу
         // breaker: gobreaker.NewCircuitBreaker(gobreaker.Settings{
         //     Name:        "orchestrator",
         //     MaxRequests: 6, // 6 прав на ошибку у ивента
