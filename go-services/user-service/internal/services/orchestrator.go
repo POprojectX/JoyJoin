@@ -72,7 +72,7 @@ type orchestratorService struct {
     rateMap map[string]time.Time // устанавливаем для emal-ов кд по запросам. Например один пользователь может делать 1 запрос в секунду. 
 	// При больших нагрузках в паре с orchestratorLimiter дает баланс между стабильной нагрузкой на сервер и балансом запросов среди пользователей
 	rateMu sync.RWMutex // мутекс для пользователей из rateMap
-	rateLimit time.Duration // устанавливаем время кд
+	rateLimit time.Duration // устанавливаем время кд _
 }
 
 func NewEventOrchestrator(
