@@ -388,10 +388,12 @@ func (o *orchestratorService) CancelEventWithCleanup(ctx context.Context, eventI
 			err := o.participantService.SelfRemove(ctx, u.UserID, eventID)
 			defer wg.Done()
 			if err != nil {
-				errChan <- err
+				select {
+					case errChan <- err:
+					default:
+				}
 			}
 		}()
-		
 	}
 	wg.Wait()
 	close(errChan)

@@ -141,6 +141,9 @@ func (s *eventService) PublishEvent(ctx context.Context, id uuid.UUID) (*domain.
 	if err != nil {
 		return nil, err
 	}
+	if event == nil {
+		return nil, ErrEventNotFound
+	}
 	if event.Status != domain.StatusDraft {
 		return nil, ErrCantPublishEvent
 	}
@@ -162,6 +165,9 @@ func (s *eventService) DraftEvent(ctx context.Context, id uuid.UUID) (*domain.Ev
 	if err != nil {
 		return nil, err
 	}
+	if event == nil {
+		return nil, ErrEventNotFound
+	}
 	if event.Status != domain.StatusAnnounced {
 		return nil, ErrCantDraftEvent
 	}
@@ -182,6 +188,9 @@ func (s *eventService) CancelledEvent(ctx context.Context, id uuid.UUID) (*domai
 	event, err := s.eventRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+	if event == nil {
+		return nil, ErrEventNotFound
 	}
 	if event.Status == domain.StatusDraft || event.Status == domain.StatusAnnounced {
 		event.Status = domain.StatusCancelled
