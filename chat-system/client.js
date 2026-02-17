@@ -1,0 +1,7 @@
+const { io } = require('socket.io-client');
+
+const socket = io('http://localhost:3000');
+
+socket.on("connect", () => {
+  console.log("Connected to the server, my id: " + socket.id);
+})
