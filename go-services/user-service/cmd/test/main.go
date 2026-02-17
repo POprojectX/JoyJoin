@@ -207,7 +207,7 @@ func main() {
 	guests := make([]uuid.UUID, 10)
 	for i := 0; i < 10; i++ {
 		time.Sleep(2 * time.Second)
-		email := fmt.Sprintf("guest%d_%d@test.com", i, time.Now().UnixNano())
+		email := fmt.Sprintf("guest%d_test17@test.com", i)
 		g, _, errReg := orchestrator.RegisterAndCreateProfile(ctx, email, "password123123", "Guest", fmt.Sprintf("№%d", i))
 		if errReg != nil || g == nil {
 			log.Printf("   Warning: failed to create guest %d: %v", i, errReg)
@@ -269,27 +269,41 @@ func main() {
 
 	time.Sleep(2 * time.Second)
 	// 22. Проверка роли
-	role, err := participantService.GetUserRoleInEvent(ctx, staff.ID, event.ID)
-	test("Checking Staff role", err)
-	if err != nil && role == domain.RoleStaff {
+	var role domain.SystemRole
+	for i := 0; i < 5; i++ {
+		role, err = participantService.GetUserRoleInEvent(ctx, staff.ID, event.ID)
+		if err == nil && role == domain.RoleStaff {
+			break
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	if role == domain.RoleStaff {
 		test("Staff role confirmed ✅", nil)
 	} else {
-		test("Staff role confirmed", fmt.Errorf("expected Staff, got %s", role))
+		test("Staff role not confirmed", fmt.Errorf("expected Staff, got %s", role))
 	}
 
 	time.Sleep(2 * time.Second)
 	// 23. Смена роли (Guest -> Organizer)
 	// Сначала добавляем гостя, потом меняем роль
-	orgEmail := fmt.Sprintf("org_%d@test.com", time.Now().Unix())
+	orgEmail := "org_TEST23@test.com"
 	org, _, err := orchestrator.RegisterAndCreateProfile(ctx, orgEmail, "password123123", "Organizer", "Junior")
 	if err != nil || org == nil {
 		log.Fatalf("Failed to create org: %v", err)
 	}
 	err = orchestrator.JoinEventAsGuestPublic(ctx, org.ID, event.ID)
+	time.Sleep(500 * time.Millisecond)
 	if err != nil {
 		log.Printf("   Warning: org failed to join: %v", err)
 	}else {
-		participant, err := participantService.GetParticipantByUserID(ctx, org.ID, event.ID)
+		var participant *domain.EventParticipant
+		for i := 0; i < 5; i++ {
+			participant, err = participantService.GetParticipantByUserID(ctx, org.ID, event.ID)
+			if err == nil && participant != nil {
+				break
+			}
+			time.Sleep(500 * time.Microsecond)
+		}
 		if err != nil || participant == nil {
 			log.Printf("   Warning: org not found as participant: %v", err)
 		} else {
@@ -300,7 +314,7 @@ func main() {
 
 	time.Sleep(2 * time.Second)
 	// 24. Проверка что Organizer может назначать Staff
-	staff2Email := fmt.Sprintf("staff2_%d@test.com", time.Now().Unix())
+	staff2Email := "staff2_24@test.com"
 	staff2, _, _ := orchestrator.RegisterAndCreateProfile(ctx, staff2Email, "password123123", "Employee2", "Test")
 	
 	err = orchestrator.AssignStaffWithOutSlotCheck(ctx, org.ID, staff2.ID, event.ID, nil)
@@ -390,7 +404,7 @@ func main() {
 	// Создаём 10 гостей
 	concurrentGuests := make([]uuid.UUID, 10)
 	for i := 0; i < 10; i++ {
-		email := fmt.Sprintf("concurrent%d_%d@test.com", i, time.Now().UnixNano())
+		email := fmt.Sprintf("concurrent%d_30@test.com", i)
 		g, _, errReg := orchestrator.RegisterAndCreateProfile(ctx, email, "password123123", "Concurrent", fmt.Sprintf("№%d", i))
 		if errReg != nil {
 			log.Printf("   Warning: failed to create concurrent guest %d: %v", i, errReg)

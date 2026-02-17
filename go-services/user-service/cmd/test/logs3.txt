@@ -1,0 +1,476 @@
+ ✔ Network joyjoin_default  Created                                                                                                  0.1s 
+ ✔ Container user-db-test   Created                                                                                                  0.4s 
+ ✔ Container test-runner    Created                                                                                                  0.2s 
+Attaching to test-runner, user-db-test
+user-db-test  | The files belonging to this database system will be owned by user "postgres".
+user-db-test  | This user must also own the server process.
+user-db-test  |
+user-db-test  | The database cluster will be initialized with locale "en_US.utf8".
+user-db-test  | The default database encoding has accordingly been set to "UTF8".
+user-db-test  | The default text search configuration will be set to "english".
+user-db-test  |
+user-db-test  | Data page checksums are disabled.
+user-db-test  |
+user-db-test  | fixing permissions on existing directory /var/lib/postgresql/data ... ok
+user-db-test  | creating subdirectories ... ok
+user-db-test  | selecting dynamic shared memory implementation ... posix
+user-db-test  | selecting default max_connections ... 100
+user-db-test  | selecting default shared_buffers ... 128MB
+user-db-test  | selecting default time zone ... UTC
+user-db-test  | creating configuration files ... ok
+user-db-test  | running bootstrap script ... ok
+user-db-test  | sh: locale: not found
+user-db-test  | 2026-02-16 17:39:50.995 UTC [36] WARNING:  no usable system locales were found
+user-db-test  | performing post-bootstrap initialization ... ok
+user-db-test  | initdb: warning: enabling "trust" authentication for local connections
+user-db-test  | initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+user-db-test  | syncing data to disk ... ok
+user-db-test  |
+user-db-test  |
+user-db-test  | Success. You can now start the database server using:
+user-db-test  |
+user-db-test  |     pg_ctl -D /var/lib/postgresql/data -l logfile start
+user-db-test  |
+user-db-test  | waiting for server to start....2026-02-16 17:39:51.758 UTC [42] LOG:  starting PostgreSQL 15.16 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+user-db-test  | 2026-02-16 17:39:51.768 UTC [42] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+user-db-test  | 2026-02-16 17:39:51.806 UTC [45] LOG:  database system was shut down at 2026-02-16 17:39:51 UTC
+user-db-test  | 2026-02-16 17:39:51.846 UTC [42] LOG:  database system is ready to accept connections
+user-db-test  |  done
+user-db-test  | server started
+user-db-test  | CREATE DATABASE
+user-db-test  | 
+user-db-test  |
+user-db-test  | /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+user-db-test  |
+user-db-test  | waiting for server to shut down...2026-02-16 17:39:52.192 UTC [42] LOG:  received fast shutdown request
+user-db-test  | 2026-02-16 17:39:52.192 UTC [42] LOG:  aborting any active transactions
+user-db-test  | .2026-02-16 17:39:52.220 UTC [42] LOG:  background worker "logical replication launcher" (PID 48) exited with exit code 1
+user-db-test  | 2026-02-16 17:39:52.221 UTC [43] LOG:  shutting down
+user-db-test  | 2026-02-16 17:39:52.221 UTC [43] LOG:  checkpoint starting: shutdown immediate
+user-db-test  | 2026-02-16 17:39:52.252 UTC [43] LOG:  checkpoint complete: wrote 921 buffers (5.6%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.029 s, sync=0.001 s, total=0.031 s; sync files=301, longest=0.001 s, average=0.001 s; distance=4239 kB, estimate=4239 kB  
+user-db-test  | 2026-02-16 17:39:52.297 UTC [42] LOG:  database system is shut down
+user-db-test  |  done
+user-db-test  | server stopped
+user-db-test  |
+user-db-test  | PostgreSQL init process complete; ready for start up.
+user-db-test  |
+user-db-test  | 2026-02-16 17:39:52.435 UTC [1] LOG:  starting PostgreSQL 15.16 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+user-db-test  | 2026-02-16 17:39:52.435 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+user-db-test  | 2026-02-16 17:39:52.436 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+user-db-test  | 2026-02-16 17:39:52.441 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+user-db-test  | 2026-02-16 17:39:52.452 UTC [58] LOG:  database system was shut down at 2026-02-16 17:39:52 UTC
+user-db-test  | 2026-02-16 17:39:52.463 UTC [1] LOG:  database system is ready to accept connections
+test-runner   | 2026/02/16 17:39:55 Database connected and migrated successfully!
+test-runner   | 2026/02/16 17:39:55 =======================start testing====================
+test-runner   | 2026/02/16 17:39:55 --- User Service ---
+test-runner   |
+test-runner   | 2026/02/16 17:39:55 /app/internal/repo/user_repo.go:60 record not found
+test-runner   | [1.823ms] [rows:0] SELECT * FROM "users" WHERE email = 'user1_1771263595@test.com' ORDER BY "users"."id" LIMIT 1
+test-runner   | 2026/02/16 17:39:56 PASS: User registration
+test-runner   | 2026/02/16 17:39:56 PASS: Blocking already used email ✅
+test-runner   | 2026/02/16 17:39:58 PASS: Login
+test-runner   | 2026/02/16 17:39:58    Token: eyJhbGciOiJIUzI1NiIs...
+test-runner   | 2026/02/16 17:39:58 PASS: Blocking wrong password
+test-runner   | 2026/02/16 17:39:58 PASS: Getting user profile
+test-runner   | 2026/02/16 17:39:58    User: Bob McLover
+test-runner   | 2026/02/16 17:39:58 PASS: Updating user profile
+test-runner   | 2026/02/16 17:39:58 PASS: Getting user with events
+test-runner   | 2026/02/16 17:39:58    User with events: 0 events
+test-runner   | 2026/02/16 17:39:58 --- Event Service ---
+test-runner   |
+test-runner   | 2026/02/16 17:39:58 /app/internal/repo/user_repo.go:60 record not found
+test-runner   | [0.340ms] [rows:0] SELECT * FROM "users" WHERE email = 'user2_1771263598@test.com' ORDER BY "users"."id" LIMIT 1
+test-runner   | 2026/02/16 17:39:58 PASS: Create event
+test-runner   | 2026/02/16 17:39:58    Event ID: 6979d3d8-e0f9-4647-9373-06d2394e4e0d, Status: Draft
+test-runner   | 2026/02/16 17:39:58 PASS: Draft Status by default ✅
+test-runner   | 2026/02/16 17:40:00 PASS: Publishing event
+test-runner   | 2026/02/16 17:40:00 PASS: Status Announced after publishing
+test-runner   | 2026/02/16 17:40:00 PASS: Blocking publishing event by non-owner
+test-runner   | 2026/02/16 17:40:00 PASS: Updating event title
+test-runner   | 2026/02/16 17:40:00 PASS: Getting event participants (only owner)
+test-runner   | 2026/02/16 17:40:00    Participants: 1
+test-runner   | 2026/02/16 17:40:00
+test-runner   | --- Slots & Participants ---
+test-runner   | 
+test-runner   | 2026/02/16 17:40:02 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [1.009ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = 'c6f5d4bc-2a03-4781-8e91-3da1207e57b0' AND event_id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:40:02  context canceled
+test-runner   | [0.557ms] [rows:0] SELECT * FROM "users" WHERE "users"."id" = '3ec48a3f-f401-4343-a693-63b4a7e92eb6'
+test-runner   |
+test-runner   | 2026/02/16 17:40:02 /app/internal/repo/user_repo.go:50 failed to connect to `user=test database=joyjoin_test_db`: 172.18.0.2:5432 (test-db): failed to receive message: context canceled
+test-runner   | [2.188ms] [rows:0] SELECT * FROM "users" WHERE id = 'c6f5d4bc-2a03-4781-8e91-3da1207e57b0' ORDER BY "users"."id" LIMIT 1  
+test-runner   |
+test-runner   | 2026/02/16 17:40:02 /app/internal/repo/event_repo.go:53 context canceled
+test-runner   | [1.748ms] [rows:1] SELECT * FROM "event_participants" WHERE "event_participants"."event_id" = '6979d3d8-e0f9-4647-9373-06d2394e4e0d'
+test-runner   |
+test-runner   | 2026/02/16 17:40:02 /app/internal/repo/event_repo.go:53 context canceled
+test-runner   | [2.627ms] [rows:1] SELECT * FROM "events" WHERE id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "events"."id" LIMIT 1
+test-runner   | 2026/02/16 17:40:02 FAIL: Joining event as guest - there no owner
+test-runner   | 2026/02/16 17:40:04    Total Slots: 10, Available: 10
+test-runner   | 2026/02/16 17:40:04 FAIL: Slot occupied - expected 9 available, got 10
+test-runner   | 
+test-runner   | 2026/02/16 17:40:06 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [0.304ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = 'c6f5d4bc-2a03-4781-8e91-3da1207e57b0' AND event_id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:40:06 /app/internal/repo/user_repo.go:50 failed to connect to `user=test database=joyjoin_test_db`: 172.18.0.2:5432 (test-db): dial error: dial tcp 172.18.0.2:5432: operation was canceled
+test-runner   | [1.539ms] [rows:0] SELECT * FROM "users" WHERE id = 'c6f5d4bc-2a03-4781-8e91-3da1207e57b0' ORDER BY "users"."id" LIMIT 1  
+test-runner   |
+test-runner   | 2026/02/16 17:40:06 /app/internal/repo/event_repo.go:53 context canceled
+test-runner   | [0.046ms] [rows:0] SELECT * FROM "event_participants" WHERE "event_participants"."event_id" = '6979d3d8-e0f9-4647-9373-06d2394e4e0d'
+test-runner   |
+test-runner   | 2026/02/16 17:40:06 /app/internal/repo/event_repo.go:53 context canceled
+test-runner   | [1.968ms] [rows:1] SELECT * FROM "events" WHERE id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "events"."id" LIMIT 1
+test-runner   | 2026/02/16 17:40:06 PASS: Blocking repeated joining ✅
+test-runner   | 2026/02/16 17:40:08    Creating 10 guests to fill all slots...
+test-runner   | 
+test-runner   | 2026/02/16 17:40:10 /app/internal/repo/user_repo.go:60 record not found
+test-runner   | [0.850ms] [rows:0] SELECT * FROM "users" WHERE email = 'guest0_test17@test.com' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:40:12 /app/internal/repo/user_repo.go:60 record not found
+test-runner   | [1.454ms] [rows:0] SELECT * FROM "users" WHERE email = 'guest1_test17@test.com' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:40:14 /app/internal/repo/user_repo.go:60 record not found
+test-runner   | [0.950ms] [rows:0] SELECT * FROM "users" WHERE email = 'guest2_test17@test.com' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:40:16 /app/internal/repo/user_repo.go:60 record not found
+test-runner   | [0.885ms] [rows:0] SELECT * FROM "users" WHERE email = 'guest3_test17@test.com' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:40:18 /app/internal/repo/user_repo.go:60 record not found
+test-runner   | [2.541ms] [rows:0] SELECT * FROM "users" WHERE email = 'guest4_test17@test.com' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:40:21 /app/internal/repo/user_repo.go:60 record not found
+test-runner   | [0.836ms] [rows:0] SELECT * FROM "users" WHERE email = 'guest5_test17@test.com' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:40:23 /app/internal/repo/user_repo.go:60 record not found
+test-runner   | [0.904ms] [rows:0] SELECT * FROM "users" WHERE email = 'guest6_test17@test.com' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:40:25 /app/internal/repo/user_repo.go:60 record not found
+test-runner   | [1.653ms] [rows:0] SELECT * FROM "users" WHERE email = 'guest7_test17@test.com' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:40:27 /app/internal/repo/user_repo.go:60 record not found
+test-runner   | [1.106ms] [rows:0] SELECT * FROM "users" WHERE email = 'guest8_test17@test.com' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:40:29 /app/internal/repo/user_repo.go:60 record not found
+test-runner   | [0.856ms] [rows:0] SELECT * FROM "users" WHERE email = 'guest9_test17@test.com' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:40:31 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [0.426ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = '0b89d49f-9647-47d0-b731-c365ecfcdc09' AND event_id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:40:31 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [2.909ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = '429330f2-d400-486c-9a9f-ddb14d7401b7' AND event_id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:40:31 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [7.972ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = 'd5ff6b63-c3c5-46c1-ac93-0b7cfebe6036' AND event_id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:40:31 /app/internal/repo/user_repo.go:50 failed to connect to `user=test database=joyjoin_test_db`: hostname resolving error: lookup test-db on 127.0.0.11:53: dial udp 127.0.0.11:53: operation was canceled
+test-runner   | [7.516ms] [rows:0] SELECT * FROM "users" WHERE id = 'd5ff6b63-c3c5-46c1-ac93-0b7cfebe6036' ORDER BY "users"."id" LIMIT 1  
+test-runner   |
+test-runner   | 2026/02/16 17:40:31 /app/internal/repo/event_repo.go:53 context canceled
+test-runner   | [4.795ms] [rows:0] SELECT * FROM "event_participants" WHERE "event_participants"."event_id" = '6979d3d8-e0f9-4647-9373-06d2394e4e0d'
+test-runner   |
+test-runner   | 2026/02/16 17:40:31 /app/internal/repo/event_repo.go:53 context canceled
+test-runner   | [15.973ms] [rows:1] SELECT * FROM "events" WHERE id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "events"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:40:31 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [1.353ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = 'aaba524e-2618-4f04-824e-95273c34428c' AND event_id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:40:31 /app/internal/repo/event_repo.go:53 failed to connect to `user=test database=joyjoin_test_db`: 172.18.0.2:5432 (test-db): failed to receive message: context canceled
+test-runner   | [6.269ms] [rows:0] SELECT * FROM "events" WHERE id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "events"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:40:31 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [1.007ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = 'e0155eeb-2712-4e4e-b1dd-a9e7b9a4707a' AND event_id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:40:32 /app/internal/repo/event_repo.go:53 context canceled
+test-runner   | [0.203ms] [rows:0] SELECT * FROM "event_participants" WHERE "event_participants"."event_id" = '6979d3d8-e0f9-4647-9373-06d2394e4e0d'
+test-runner   |
+test-runner   | 2026/02/16 17:40:32 /app/internal/repo/user_repo.go:50 failed to connect to `user=test database=joyjoin_test_db`: 172.18.0.2:5432 (test-db): dial error: dial tcp 172.18.0.2:5432: operation was canceled
+test-runner   | [4.184ms] [rows:0] SELECT * FROM "users" WHERE id = 'e0155eeb-2712-4e4e-b1dd-a9e7b9a4707a' ORDER BY "users"."id" LIMIT 1  
+test-runner   |
+test-runner   | 2026/02/16 17:40:32 /app/internal/repo/event_repo.go:53 context canceled
+test-runner   | [5.362ms] [rows:1] SELECT * FROM "events" WHERE id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "events"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:40:32 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [1.167ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = '4acf172d-3470-4216-8dde-8c62614ba714' AND event_id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:40:32 /app/internal/repo/event_repo.go:53 context canceled
+test-runner   | [3.536ms] [rows:0] SELECT * FROM "events" WHERE id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "events"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:40:32 /app/internal/repo/user_repo.go:50 failed to connect to `user=test database=joyjoin_test_db`: 172.18.0.2:5432 (test-db): dial error: dial tcp 172.18.0.2:5432: operation was canceled
+test-runner   | [5.691ms] [rows:0] SELECT * FROM "users" WHERE id = '4acf172d-3470-4216-8dde-8c62614ba714' ORDER BY "users"."id" LIMIT 1  
+test-runner   | 
+test-runner   | 2026/02/16 17:40:32 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [2.212ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = '29659a02-10d3-4ef7-84f0-334f0db9a40f' AND event_id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:40:32 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [0.376ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = 'e9d6d45a-132d-4a3e-be70-2ebeab4e7f91' AND event_id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:40:32 /app/internal/repo/user_repo.go:50 failed to connect to `user=test database=joyjoin_test_db`: 172.18.0.2:5432 (test-db): failed SASL auth: context canceled
+test-runner   | [10.068ms] [rows:0] SELECT * FROM "users" WHERE id = 'e9d6d45a-132d-4a3e-be70-2ebeab4e7f91' ORDER BY "users"."id" LIMIT 1 
+test-runner   |
+test-runner   | 2026/02/16 17:40:32 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [0.419ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = '6f7d8fe5-e0ad-48d2-9676-fe62203f0d90' AND event_id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:40:32 /app/internal/repo/event_repo.go:53 context canceled
+test-runner   | [0.041ms] [rows:0] SELECT * FROM "events" WHERE id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "events"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:40:32 /app/internal/repo/user_repo.go:50 context canceled
+test-runner   | [2.624ms] [rows:0] SELECT * FROM "users" WHERE id = '6f7d8fe5-e0ad-48d2-9676-fe62203f0d90' ORDER BY "users"."id" LIMIT 1  
+test-runner   | 2026/02/16 17:40:34 FAIL: All slots are occupied - expected 0, got 10
+test-runner   | 
+test-runner   | 2026/02/16 17:40:36 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [2.214ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = 'b9b6d278-e09c-4644-b263-b857ed327a79' AND event_id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:40:36 /app/internal/repo/user_repo.go:50 failed to connect to `user=test database=joyjoin_test_db`: 172.18.0.2:5432 (test-db): dial error: dial tcp 172.18.0.2:5432: operation was canceled
+test-runner   | [2.174ms] [rows:0] SELECT * FROM "users" WHERE id = 'b9b6d278-e09c-4644-b263-b857ed327a79' ORDER BY "users"."id" LIMIT 1  
+test-runner   | 2026/02/16 17:40:36 PASS: Blocking joining when no slots available ✅
+test-runner   | 
+test-runner   | 2026/02/16 17:40:38 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [0.356ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = '0b89d49f-9647-47d0-b731-c365ecfcdc09' AND event_id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   | 2026/02/16 17:40:38 FAIL: Leaving event + freeing slot - record not found
+test-runner   | 2026/02/16 17:40:38 FAIL: Slot freed - expected 1, got 10
+test-runner   | 2026/02/16 17:40:38
+test-runner   | --- Role Management ---
+test-runner   | 
+test-runner   | 2026/02/16 17:40:40 /app/internal/repo/user_repo.go:60 record not found
+test-runner   | [2.200ms] [rows:0] SELECT * FROM "users" WHERE email = 'staff_1771263640@test.com' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:40:40 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [0.417ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = '303b8541-34ae-4464-a777-a12e52f3efb6' AND event_id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   | 2026/02/16 17:40:40 FAIL: Staff assigned - context canceled
+test-runner   | 
+test-runner   | 2026/02/16 17:40:42 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [1.013ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = '303b8541-34ae-4464-a777-a12e52f3efb6' AND event_id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:40:42 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [3.141ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = '303b8541-34ae-4464-a777-a12e52f3efb6' AND event_id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:40:43 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [0.764ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = '303b8541-34ae-4464-a777-a12e52f3efb6' AND event_id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:40:43 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [0.565ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = '303b8541-34ae-4464-a777-a12e52f3efb6' AND event_id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:40:44 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [0.946ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = '303b8541-34ae-4464-a777-a12e52f3efb6' AND event_id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   | 2026/02/16 17:40:44 FAIL: Staff role not confirmed - expected Staff, got 
+test-runner   | 
+test-runner   | 2026/02/16 17:40:46 /app/internal/repo/user_repo.go:60 record not found
+test-runner   | [6.680ms] [rows:0] SELECT * FROM "users" WHERE email = 'org_TEST23@test.com' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:40:46 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [0.378ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = '2891e6a5-5da6-4d44-818f-06b1c3031b79' AND event_id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:40:46 /app/internal/repo/event_repo.go:53 context canceled
+test-runner   | [2.688ms] [rows:0] SELECT * FROM "events" WHERE id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "events"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:40:46 /app/internal/repo/user_repo.go:50 failed to connect to `user=test database=joyjoin_test_db`: 172.18.0.2:5432 (test-db): dial error: dial tcp 172.18.0.2:5432: operation was canceled
+test-runner   | [2.529ms] [rows:0] SELECT * FROM "users" WHERE id = '2891e6a5-5da6-4d44-818f-06b1c3031b79' ORDER BY "users"."id" LIMIT 1  
+test-runner   | 2026/02/16 17:40:47    Warning: org failed to join: there no owner
+test-runner   | 
+test-runner   | 2026/02/16 17:40:49 /app/internal/repo/user_repo.go:60 record not found
+test-runner   | [3.320ms] [rows:0] SELECT * FROM "users" WHERE email = 'staff2_24@test.com' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:40:49 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [0.697ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = 'a14a28a1-0722-4798-8cdb-f07ab0292b13' AND event_id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:40:49 /app/internal/repo/user_repo.go:50 failed to connect to `user=test database=joyjoin_test_db`: 172.18.0.2:5432 (test-db): failed to receive message: context canceled
+test-runner   | [7.258ms] [rows:0] SELECT * FROM "users" WHERE id = 'a14a28a1-0722-4798-8cdb-f07ab0292b13' ORDER BY "users"."id" LIMIT 1  
+test-runner   | 2026/02/16 17:40:49 FAIL: Organizer assigns Staff - there no owner
+test-runner   | 2026/02/16 17:40:51 PASS: Organizer cant change Owner role ✅
+test-runner   | 2026/02/16 17:40:51 
+test-runner   | --- Private Events ---
+test-runner   |
+test-runner   | 2026/02/16 17:40:51 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [0.477ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = '2891e6a5-5da6-4d44-818f-06b1c3031b79' AND event_id = '6979d3d8-e0f9-4647-9373-06d2394e4e0d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   | 2026/02/16 17:40:53 RATE LIMIT HIT for 3ec48a3f-f401-4343-a693-63b4a7e92eb6
+test-runner   | 
+test-runner   | 2026/02/16 17:40:55 /app/internal/repo/user_repo.go:60 record not found
+test-runner   | [1.356ms] [rows:0] SELECT * FROM "users" WHERE email = 'random_1771263655@test.com' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:40:55 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [0.202ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = '3a9ea362-55f9-437f-8bfb-8298f77c88c9' AND event_id = '4201e8d0-9ebe-4e3d-8f9b-dd2ab815d342' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:40:55 /app/internal/repo/participant_repo.go:116 failed to connect to `user=test database=joyjoin_test_db`: 172.18.0.2:5432 (test-db): failed to receive message: context canceled
+test-runner   | [3.289ms] [rows:0] SELECT count(*) FROM "event_participants" WHERE user_id = '00000000-0000-0000-0000-000000000000' AND event_id = '4201e8d0-9ebe-4e3d-8f9b-dd2ab815d342' AND system_role IN ('Owner','Organizer')
+test-runner   | 2026/02/16 17:40:55 PASS: Blocking public access to private event
+test-runner   | 
+test-runner   | 2026/02/16 17:40:57 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [0.511ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = '3a9ea362-55f9-437f-8bfb-8298f77c88c9' AND event_id = '4201e8d0-9ebe-4e3d-8f9b-dd2ab815d342' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   | 2026/02/16 17:40:57 FAIL: Private joining via invitation - context canceled
+test-runner   | 2026/02/16 17:40:57
+test-runner   | --- Cancellation & Deletion ---
+test-runner   | 2026/02/16 17:40:59 PASS: Canceling event
+test-runner   | 2026/02/16 17:40:59 FAIL: Status Cancelled - expected Cancelled, got Draft
+test-runner   | 2026/02/16 17:41:01 PASS: Deleting user with cleanup
+test-runner   | 
+test-runner   | 2026/02/16 17:41:01 /app/internal/repo/user_repo.go:50 record not found
+test-runner   | [0.505ms] [rows:0] SELECT * FROM "users" WHERE id = '3a9ea362-55f9-437f-8bfb-8298f77c88c9' ORDER BY "users"."id" LIMIT 1  
+test-runner   | 2026/02/16 17:41:01 PASS: User deleted successfully
+test-runner   | 2026/02/16 17:41:03 
+test-runner   | --- Concurrent Slots Test ---
+test-runner   | 2026/02/16 17:41:03 RATE LIMIT HIT for 3ec48a3f-f401-4343-a693-63b4a7e92eb6
+test-runner   | 
+test-runner   | 2026/02/16 17:41:05 /app/internal/repo/user_repo.go:60 record not found
+test-runner   | [0.802ms] [rows:0] SELECT * FROM "users" WHERE email = 'concurrent0_30@test.com' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:41:05 /app/internal/repo/user_repo.go:60 record not found
+test-runner   | [0.315ms] [rows:0] SELECT * FROM "users" WHERE email = 'concurrent1_30@test.com' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:41:05 /app/internal/repo/user_repo.go:60 record not found
+test-runner   | [0.258ms] [rows:0] SELECT * FROM "users" WHERE email = 'concurrent2_30@test.com' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:41:05 /app/internal/repo/user_repo.go:60 record not found
+test-runner   | [0.304ms] [rows:0] SELECT * FROM "users" WHERE email = 'concurrent3_30@test.com' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:41:05 /app/internal/repo/user_repo.go:60 record not found
+test-runner   | [0.355ms] [rows:0] SELECT * FROM "users" WHERE email = 'concurrent4_30@test.com' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:41:06 /app/internal/repo/user_repo.go:60 record not found
+test-runner   | [0.306ms] [rows:0] SELECT * FROM "users" WHERE email = 'concurrent5_30@test.com' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:41:06 /app/internal/repo/user_repo.go:60 record not found
+test-runner   | [1.263ms] [rows:0] SELECT * FROM "users" WHERE email = 'concurrent6_30@test.com' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:41:06 /app/internal/repo/user_repo.go:60 record not found
+test-runner   | [0.197ms] [rows:0] SELECT * FROM "users" WHERE email = 'concurrent7_30@test.com' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:41:06 /app/internal/repo/user_repo.go:60 record not found
+test-runner   | [0.887ms] [rows:0] SELECT * FROM "users" WHERE email = 'concurrent8_30@test.com' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:41:06 /app/internal/repo/user_repo.go:60 record not found
+test-runner   | [0.303ms] [rows:0] SELECT * FROM "users" WHERE email = 'concurrent9_30@test.com' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:41:06 /app/internal/repo/event_repo.go:53 SLOW SQL >= 200ms
+test-runner   | [220.982ms] [rows:1] SELECT * FROM "events" WHERE id = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d' ORDER BY "events"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:41:06 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [7.554ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = '221ad3ee-5c62-487f-94c4-d118099348ce' AND event_id = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:41:06 /app/internal/repo/user_repo.go:50 context canceled
+test-runner   | [39.187ms] [rows:0] SELECT * FROM "users" WHERE id = '221ad3ee-5c62-487f-94c4-d118099348ce' ORDER BY "users"."id" LIMIT 1 
+test-runner   |
+test-runner   | 2026/02/16 17:41:06 /app/internal/repo/event_repo.go:53 failed to connect to `user=test database=joyjoin_test_db`: 172.18.0.2:5432 (test-db): failed to receive message: context canceled
+test-runner   | [39.521ms] [rows:0] SELECT * FROM "events" WHERE id = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d' ORDER BY "events"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:41:06 /app/internal/repo/user_repo.go:50 SLOW SQL >= 200ms
+test-runner   | [345.082ms] [rows:1] SELECT * FROM "users" WHERE id = '0f4f8210-edf6-4578-a872-d07dc6d0d998' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:41:06 /app/internal/repo/event_repo.go:53 SLOW SQL >= 200ms
+test-runner   | [392.539ms] [rows:1] SELECT * FROM "events" WHERE id = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d' ORDER BY "events"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:41:06 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [5.409ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = '0f4f8210-edf6-4578-a872-d07dc6d0d998' AND event_id = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:41:06 /app/internal/repo/user_repo.go:50 SLOW SQL >= 200ms
+test-runner   | [447.612ms] [rows:1] SELECT * FROM "users" WHERE id = '1a08cf34-ac10-4175-8655-40941391e65a' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/event_repo.go:53 SLOW SQL >= 200ms
+test-runner   | [476.913ms] [rows:1] SELECT * FROM "events" WHERE id = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d' ORDER BY "events"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/user_repo.go:50 SLOW SQL >= 200ms
+test-runner   | [481.023ms] [rows:1] SELECT * FROM "users" WHERE id = '51558588-ff2c-48cb-9ac2-dfcca72fad46' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/event_repo.go:53 SLOW SQL >= 200ms
+test-runner   | [521.894ms] [rows:1] SELECT * FROM "events" WHERE id = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d' ORDER BY "events"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [45.312ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = '7ebee3d3-ba29-4675-8638-f4f5ef26e07b' AND event_id = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/user_repo.go:50 SLOW SQL >= 200ms
+test-runner   | [529.444ms] [rows:1] SELECT * FROM "users" WHERE id = 'd0c22f77-ffb9-4caa-803b-c0a6d41ab4a9' ORDER BY "users"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/user_repo.go:50 SLOW SQL >= 200ms
+test-runner   | [535.954ms] [rows:1] SELECT * FROM "users" WHERE id = 'be6e9166-ce98-45c4-a4c5-690b06df839d' ORDER BY "users"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [8.964ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = 'be6e9166-ce98-45c4-a4c5-690b06df839d' AND event_id = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/event_repo.go:53 SLOW SQL >= 200ms
+test-runner   | [550.013ms] [rows:1] SELECT * FROM "events" WHERE id = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d' ORDER BY "events"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [38.334ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = '51558588-ff2c-48cb-9ac2-dfcca72fad46' AND event_id = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/event_repo.go:53 SLOW SQL >= 200ms
+test-runner   | [596.676ms] [rows:1] SELECT * FROM "events" WHERE id = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d' ORDER BY "events"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/event_repo.go:53 SLOW SQL >= 200ms
+test-runner   | [603.087ms] [rows:1] SELECT * FROM "events" WHERE id = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d' ORDER BY "events"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/user_repo.go:50 SLOW SQL >= 200ms
+test-runner   | [210.115ms] [rows:1] SELECT * FROM "users" WHERE id = '0f4f8210-edf6-4578-a872-d07dc6d0d998' ORDER BY "users"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [7.660ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = '327939e6-302f-4271-93da-e5a2a825997d' AND event_id = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/event_repo.go:53 context canceled
+test-runner   | [6.011ms] [rows:0] SELECT * FROM "events" WHERE id = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d' ORDER BY "events"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/user_repo.go:50 failed to connect to `user=test database=joyjoin_test_db`: 172.18.0.2:5432 (test-db): failed to receive message: context canceled
+test-runner   | [6.955ms] [rows:0] SELECT * FROM "users" WHERE id = '327939e6-302f-4271-93da-e5a2a825997d' ORDER BY "users"."id" LIMIT 1  
+test-runner   | 
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [77.934ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = '8f5fe90e-d74b-44af-afab-2a5d164bdcf4' AND event_id = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/event_repo.go:53 context canceled
+test-runner   | [20.444ms] [rows:0] SELECT * FROM "events" WHERE id = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d' ORDER BY "events"."id" LIMIT 1
+user-db-test  | 2026-02-16 17:41:07.277 UTC [349] ERROR:  canceling statement due to user request
+user-db-test  | 2026-02-16 17:41:07.277 UTC [349] STATEMENT:  SELECT * FROM "events" WHERE id = $1 ORDER BY "events"."id" LIMIT $2
+user-db-test  | 2026-02-16 17:41:07.277 UTC [349] LOG:  could not send data to client: Broken pipe
+user-db-test  | 2026-02-16 17:41:07.277 UTC [349] FATAL:  connection to client lost
+test-runner   |
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/event_repo.go:53 context canceled
+test-runner   | [190.114ms] [rows:0] SELECT * FROM "events" WHERE id = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d' ORDER BY "events"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/event_repo.go:53 SLOW SQL >= 200ms
+test-runner   | [759.421ms] [rows:1] SELECT * FROM "events" WHERE id = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d' ORDER BY "events"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/user_repo.go:50 context canceled
+test-runner   | [193.629ms] [rows:0] SELECT * FROM "users" WHERE id = '51558588-ff2c-48cb-9ac2-dfcca72fad46' ORDER BY "users"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [0.764ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = 'd0c22f77-ffb9-4caa-803b-c0a6d41ab4a9' AND event_id = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d' ORDER BY "event_participants"."id" LIMIT 1
+user-db-test  | 2026-02-16 17:41:07.291 UTC [360] ERROR:  canceling statement due to user request
+user-db-test  | 2026-02-16 17:41:07.291 UTC [360] STATEMENT:  SELECT * FROM "events" WHERE id = $1 ORDER BY "events"."id" LIMIT $2        
+test-runner   | 
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/event_repo.go:53 context canceled
+test-runner   | [15.268ms] [rows:0] SELECT * FROM "event_participants" WHERE "event_participants"."event_id" = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d'
+test-runner   |
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/event_repo.go:53 context canceled
+test-runner   | [17.212ms] [rows:1] SELECT * FROM "events" WHERE id = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d' ORDER BY "events"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/user_repo.go:50 failed to connect to `user=test database=joyjoin_test_db`: 172.18.0.2:5432 (test-db): failed to receive message: context canceled
+test-runner   | [17.736ms] [rows:0] SELECT * FROM "users" WHERE id = 'd0c22f77-ffb9-4caa-803b-c0a6d41ab4a9' ORDER BY "users"."id" LIMIT 1 
+user-db-test  | 2026-02-16 17:41:07.311 UTC [360] LOG:  could not send data to client: Broken pipe
+user-db-test  | 2026-02-16 17:41:07.312 UTC [360] FATAL:  connection to client lost
+user-db-test  | 2026-02-16 17:41:07.324 UTC [359] ERROR:  canceling statement due to user request
+user-db-test  | 2026-02-16 17:41:07.324 UTC [359] STATEMENT:  SELECT * FROM "users" WHERE id = $1 ORDER BY "users"."id" LIMIT $2
+test-runner   |
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/participant_repo.go:116 SLOW SQL >= 200ms
+test-runner   | [406.023ms] [rows:1] SELECT count(*) FROM "event_participants" WHERE user_id = '00000000-0000-0000-0000-000000000000' AND event_id = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d' AND system_role IN ('Owner','Organizer')
+user-db-test  | 2026-02-16 17:41:07.330 UTC [359] LOG:  could not send data to client: Connection reset by peer
+user-db-test  | 2026-02-16 17:41:07.332 UTC [359] FATAL:  connection to client lost
+test-runner   |
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [261.208ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = '1a08cf34-ac10-4175-8655-40941391e65a' AND event_id = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   | 
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/event_repo.go:53 failed to connect to `user=test database=joyjoin_test_db`: 172.18.0.2:5432 (test-db): dial error: dial tcp 172.18.0.2:5432: operation was canceled
+test-runner   | [10.546ms] [rows:0] SELECT * FROM "events" WHERE id = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d' ORDER BY "events"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/user_repo.go:50 failed to connect to `user=test database=joyjoin_test_db`: 172.18.0.2:5432 (test-db): dial error: dial tcp 172.18.0.2:5432: operation was canceled
+test-runner   | [15.406ms] [rows:0] SELECT * FROM "users" WHERE id = '1a08cf34-ac10-4175-8655-40941391e65a' ORDER BY "users"."id" LIMIT 1 
+test-runner   | 
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/event_repo.go:53 SLOW SQL >= 200ms
+test-runner   | [829.466ms] [rows:1] SELECT * FROM "events" WHERE id = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d' ORDER BY "events"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/participant_repo.go:92 record not found
+test-runner   | [3.023ms] [rows:0] SELECT "system_role" FROM "event_participants" WHERE user_id = 'a06af48c-4db0-4178-9768-4d9f5af41d91' AND event_id = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d' ORDER BY "event_participants"."id" LIMIT 1
+test-runner   |
+test-runner   | 2026/02/16 17:41:07 /app/internal/repo/event_repo.go:53 failed to connect to `user=test database=joyjoin_test_db`: 172.18.0.2:5432 (test-db): failed to receive message: context canceled
+test-runner   | [2.971ms] [rows:0] SELECT * FROM "events" WHERE id = '169d4474-02d5-4ace-a1c5-e2ce8210ab5d' ORDER BY "events"."id" LIMIT 1
+test-runner   | 2026/02/16 17:41:07 FAIL: Concurrent test - expected 5 successes, got 0
+test-runner   | 2026/02/16 17:41:07    Total: slots 5, available 5
+test-runner   | 2026/02/16 17:41:07
+test-runner   | === 📊 All tests completed ===
+test-runner exited with code 0

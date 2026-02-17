@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"log"
 	"sync"
 	"time"
 	"user-service/internal/domain"
@@ -127,7 +128,7 @@ func (o *orchestratorService) RegisterAndCreateProfile(ctx context.Context, emai
 		jwt string
 		dto *domain.UserWithEventsDTO
 	)
-	g, ctx := errgroup.WithContext(ctx)
+	g, _ := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
 		var err error
@@ -174,7 +175,7 @@ func (o *orchestratorService) LoginAndGetProfile(ctx context.Context, email, pas
 	if err != nil {
 		return nil, "", err
 	}
-	g, ctx := errgroup.WithContext(ctx)
+	g, _ := errgroup.WithContext(ctx)
 	var (
 		jwt string
 		dto *domain.UserWithEventsDTO
@@ -239,7 +240,7 @@ func (o *orchestratorService) DeleteUserAndCleanup(ctx context.Context, userID u
 	}
 
 	listOfEvents := UserWithEventsDTO.Events
-	g, ctx := errgroup.WithContext(ctx)
+	g, _ := errgroup.WithContext(ctx)
 
 	for _, event := range listOfEvents {
 		eventID := event.EventID
@@ -348,7 +349,7 @@ func (o *orchestratorService) CancelEventWithCleanup(ctx context.Context, eventI
 	lock.Lock()
 	defer lock.Unlock()
 
-	g, ctx := errgroup.WithContext(ctx)
+	g, _ := errgroup.WithContext(ctx)
 	var eventData *domain.Event
 	
 	g.Go(func() error {
@@ -378,6 +379,7 @@ func (o *orchestratorService) CancelEventWithCleanup(ctx context.Context, eventI
 
 	wg := sync.WaitGroup{}
 	errChan := make(chan error, 1)
+	bgCtx := context.Background()
 	for _, users := range eventData.Participants {
 		if users.SystemRole == domain.RoleGuest || users.SystemRole == domain.RoleStaff {
 			continue
@@ -385,7 +387,7 @@ func (o *orchestratorService) CancelEventWithCleanup(ctx context.Context, eventI
 		u := users
 		wg.Add(1)
 		go func() {
-			err := o.participantService.SelfRemove(ctx, u.UserID, eventID)
+			err := o.participantService.SelfRemove(bgCtx, u.UserID, eventID)
 			defer wg.Done()
 			if err != nil {
 				select {
@@ -462,7 +464,7 @@ func (o *orchestratorService) GetEventFullDetails(ctx context.Context, eventID, 
 		role domain.SystemRole
 		litParticipants []domain.EventParticipant
 	)
-	g, ctx := errgroup.WithContext(ctx)
+	g, _ := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
 		var err error
@@ -504,7 +506,7 @@ func (o *orchestratorService) TransferOwnership(ctx context.Context, currentOwne
 	sem <- struct{}{}
 	defer func() {<-sem}()
 	
-	g, ctx := errgroup.WithContext(ctx)
+	g, _ := errgroup.WithContext(ctx)
 
 	var (participant *domain.EventParticipant)
 	g.Go(func() error {
@@ -528,9 +530,9 @@ func (o *orchestratorService) TransferOwnership(ctx context.Context, currentOwne
 	if err := g.Wait(); err != nil {
 		return err
 	}
-	g2, ctx := errgroup.WithContext(ctx)
+	g2, ctx2 := errgroup.WithContext(ctx)
 	g2.Go(func() error {
-		err := o.participantService.ChangeRole(ctx, currentOwnerID, participant.ID, domain.RoleOwner)
+		err := o.participantService.ChangeRole(ctx2, currentOwnerID, participant.ID, domain.RoleOwner)
 		if err != nil {
 			return err
 		}
@@ -561,7 +563,7 @@ func (o *orchestratorService) joinEventAsGuest(ctx context.Context, requesterID,
 	defer func() {<-sem}()
 	var isEvent *domain.Event
 
-	g, ctx := errgroup.WithContext(ctx)
+	g, _ := errgroup.WithContext(ctx)
 	g.Go(func() error {
 		var err error
 		isEvent, err = o.eventService.GetByID(ctx, eventID)
@@ -619,7 +621,7 @@ func (o *orchestratorService) LeaveEventAndFreeSlot(ctx context.Context, userID,
 
 	var isEvent *domain.Event
 
-	g, ctx := errgroup.WithContext(ctx)
+	g, _ := errgroup.WithContext(ctx)
 	g.Go(func() error {
 		var err error
 		isEvent, err = o.eventService.GetByID(ctx, eventID)
@@ -667,7 +669,7 @@ func (o *orchestratorService) AssignStaffWithOutSlotCheck(ctx context.Context, r
 	defer func() {<-sem}()
 	var isEvent *domain.Event
 
-	g, ctx := errgroup.WithContext(ctx)
+	g, _ := errgroup.WithContext(ctx)
 	g.Go(func() error {
 		var err error
 		isEvent, err = o.eventService.GetByID(ctx, eventID)
@@ -702,7 +704,11 @@ func (o *orchestratorService) starterWorkerPool(workers int) {
 }
 
 func (o *orchestratorService) checkRateLimitPerEmail(email string) bool {
-	return CheckRateLimitPerEmail(email, &o.rateMu, o.rateMap)
+	result := CheckRateLimitPerEmail(email, &o.rateMu, o.rateMap)
+    if !result {
+        log.Printf("RATE LIMIT HIT for %s", email)
+    }
+    return result
 }
 
 // доп функции для баланса запросоввы
