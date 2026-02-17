@@ -22,6 +22,8 @@ jobs:
           script: |
             cd ~/JoyJoin/JoyJoin
             git fetch origin main
-            git reset --hard origin/main
-            docker-compose -f docker-compose.yaml build
-            docker-compose -f docker-compose.yaml up -d --remove-orphans
+            git reset --hard origin/main 
+            docker-compose -f docker-compose.yaml down -v --remove-orphans 2>/dev/null || true
+            docker rm -f backend-user-service 2>/dev/null || true
+            docker-compose -f docker-compose.yaml build --no-cache
+            docker-compose -f docker-compose.yaml up -d
