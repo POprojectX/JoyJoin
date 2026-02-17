@@ -2,15 +2,18 @@ package repo
 
 import (
 	"user-service/internal/domain"
+	customErrors "user-service/internal/errors"
 
 	"github.com/google/uuid"
 	"golang.org/x/net/context"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type ParticipantRepository interface {
 	// CRUD
 	Create(ctx context.Context, participant *domain.EventParticipant) error
+	CreateWithSlotAtomic(ctx context.Context, participant *domain.EventParticipant, eventID uuid.UUID) error
 	GetByID(ctx context.Context, id uint) (*domain.EventParticipant, error)
 	Update(ctx context.Context, participant *domain.EventParticipant) error
 	Delete(ctx context.Context, id uint) error
@@ -41,6 +44,38 @@ func NewParticipantRepository(db *gorm.DB) ParticipantRepository {
 
 func (r *participantRepo) Create(ctx context.Context, participant *domain.EventParticipant) error {
 	return r.db.WithContext(ctx).Create(participant).Error
+}
+
+func (r *participantRepo) CreateWithSlotAtomic(ctx context.Context, participant *domain.EventParticipant, eventID uuid.UUID) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// 1. Блокируем строку события (SELECT FOR UPDATE)
+		var event domain.Event
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			First(&event, "id = ?", eventID).Error; err != nil {
+			return err
+		}
+		
+		// 2. Проверяем что можно назначить (статус, слоты)
+		if event.Status != domain.StatusAnnounced && event.Status != domain.StatusOngoing {
+			return customErrors.ErrCantBeAssignToEvent
+		}
+		
+		// 3. Только Guest занимает слот
+		if participant.SystemRole == domain.RoleGuest {
+			if event.AvailableSlots <= 0 {
+				return customErrors.ErrNoSlotsAvailable
+			}
+			// Уменьшаем слоты
+			if err := tx.Model(&domain.Event{}).
+				Where("id = ?", eventID).
+				Update("available_slots", gorm.Expr("available_slots - 1")).Error; err != nil {
+				return err
+			}
+		}
+		
+		// 4. Создаём участника
+		return tx.Create(participant).Error
+	})
 }
 
 func (r *participantRepo) GetByID(ctx context.Context, id uint) (*domain.EventParticipant, error) {

@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 	"user-service/internal/domain"
+	customErrors "user-service/internal/errors"
 
 	"github.com/google/uuid"
 	"golang.org/x/sync/errgroup"
@@ -112,11 +113,11 @@ func NewEventOrchestrator(
 func (o *orchestratorService) RegisterAndCreateProfile(ctx context.Context, email, password, firstName, lastName string) (*domain.UserWithEventsDTO, string, error) {
 	// проверка на запросы сервака
 	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
-		return nil, "", ErrTooManyRequests
+		return nil, "", customErrors.ErrTooManyRequests
 	}
 	// проверка на ошибки в context
 	if err := ctx.Err(); err != nil {
-		return nil, "", ErrContextCancelled
+		return nil, "", customErrors.ErrContextCancelled
 	}
 
 	user, err := o.userService.Register(ctx, email, password, firstName, lastName)
@@ -164,11 +165,11 @@ func (o *orchestratorService) RegisterAndCreateProfile(ctx context.Context, emai
 func (o *orchestratorService) LoginAndGetProfile(ctx context.Context, email, password string) (*domain.UserWithEventsDTO, string, error) {
 	// проверка на запросы сервака
 	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
-		return nil, "", ErrTooManyRequests
+		return nil, "", customErrors.ErrTooManyRequests
 	}
 	// проверка на ошибки в context
 	if err := ctx.Err(); err != nil {
-		return nil, "", ErrContextCancelled
+		return nil, "", customErrors.ErrContextCancelled
 	}
 
 	user, err := o.userService.Login(ctx, email, password)
@@ -214,11 +215,11 @@ func (o *orchestratorService) LoginAndGetProfile(ctx context.Context, email, pas
 func (o *orchestratorService) GetUserFullProfile(ctx context.Context, userID uuid.UUID) (*domain.User, error) {
 	// проверка на запросы сервака
 	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
-		return nil, ErrTooManyRequests
+		return nil, customErrors.ErrTooManyRequests
 	}
 	// проверка на ошибки в context
 	if err := ctx.Err(); err != nil {
-		return nil, ErrContextCancelled
+		return nil, customErrors.ErrContextCancelled
 	}
 
 	return o.userService.GetByID(ctx, userID)
@@ -227,11 +228,11 @@ func (o *orchestratorService) GetUserFullProfile(ctx context.Context, userID uui
 func (o *orchestratorService) DeleteUserAndCleanup(ctx context.Context, userID uuid.UUID) error {
 	// проверка на запросы сервака
 	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
-		return ErrTooManyRequests
+		return customErrors.ErrTooManyRequests
 	}
 	// проверка на ошибки в context
 	if err := ctx.Err(); err != nil {
-		return ErrContextCancelled
+		return customErrors.ErrContextCancelled
 	}
 
 	UserWithEventsDTO, err := o.userService.GetUserWithEvents(ctx, userID)
@@ -256,7 +257,7 @@ func (o *orchestratorService) DeleteUserAndCleanup(ctx context.Context, userID u
 		return err
 	}
 	if deletedUser != nil {
-		return ErrDeleteUserFailed
+		return customErrors.ErrDeleteUserFailed
 	}
 	return nil
 }
@@ -264,15 +265,15 @@ func (o *orchestratorService) DeleteUserAndCleanup(ctx context.Context, userID u
 func (o *orchestratorService) CreateEventWithOwner(ctx context.Context, title, description, location string, slots int, dateFrom, dateTo time.Time, ownerID uuid.UUID, access domain.Access) (*domain.Event, error) {
 	// проверка на запросы сервака
 	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
-		return nil, ErrTooManyRequests
+		return nil, customErrors.ErrTooManyRequests
 	}
 	// проверка на ошибки в context
 	if err := ctx.Err(); err != nil {
-		return nil, ErrContextCancelled
+		return nil, customErrors.ErrContextCancelled
 	}
 	// проверка на кд по email
 	if !o.checkRateLimitPerEmail(ownerID.String()) {
-        return nil, ErrTooManyRequests
+        return nil, customErrors.ErrTooManyRequests
     }
 
 	event, err := o.eventService.Create(ctx, title, description, location, slots, dateFrom, dateTo, ownerID, access)
@@ -301,15 +302,15 @@ func (o *orchestratorService) CreateEventWithOwner(ctx context.Context, title, d
 func (o *orchestratorService) PublishEventAtomic(ctx context.Context, eventID, requesterID uuid.UUID) (*domain.Event, error) {
 	// проверка на запросы сервака
 	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
-		return nil, ErrTooManyRequests
+		return nil, customErrors.ErrTooManyRequests
 	}
 	// проверка на ошибки в context
 	if err := ctx.Err(); err != nil {
-		return nil, ErrContextCancelled
+		return nil, customErrors.ErrContextCancelled
 	}
 	// проверка на кд по email
 	if !o.checkRateLimitPerEmail(requesterID.String()) {
-		return nil, ErrTooManyRequests
+		return nil, customErrors.ErrTooManyRequests
 	}
 	// локамем наш ивент что бы если вдруг другой овнер решил его опопубликовать в то же время, то второй запрос будет ждать пока первый не закончится
 	lock := o.getDistributedLock(eventID.String())
@@ -321,7 +322,7 @@ func (o *orchestratorService) PublishEventAtomic(ctx context.Context, eventID, r
 		return nil, err
 	}
 	if !isOwner {
-		return nil, ErrCantPublishEvent
+		return nil, customErrors.ErrCantPublishEvent
 	}
 
 	event, err := o.eventService.PublishEvent(ctx, eventID)
@@ -334,15 +335,15 @@ func (o *orchestratorService) PublishEventAtomic(ctx context.Context, eventID, r
 func (o *orchestratorService) CancelEventWithCleanup(ctx context.Context, eventID, requesterID uuid.UUID) error {
 	// проверка на запросы сервака
 	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
-		return ErrTooManyRequests
+		return customErrors.ErrTooManyRequests
 	}
 	// проверка на ошибки в context
 	if err := ctx.Err(); err != nil {
-		return ErrContextCancelled
+		return customErrors.ErrContextCancelled
 	}
 	// проверка на кд по email
 	if !o.checkRateLimitPerEmail(requesterID.String()) {
-		return ErrTooManyRequests
+		return customErrors.ErrTooManyRequests
 	}
 
 	lock := o.getDistributedLock(eventID.String())
@@ -359,7 +360,7 @@ func (o *orchestratorService) CancelEventWithCleanup(ctx context.Context, eventI
 			return err
 		}
 		if eventData == nil {
-			return ErrEventNotFound
+			return customErrors.ErrEventNotFound
 		}
 		return nil
 	})
@@ -369,7 +370,7 @@ func (o *orchestratorService) CancelEventWithCleanup(ctx context.Context, eventI
 			return err
 		}
 		if !isOwner {
-			return ErrCantCancelEvent
+			return customErrors.ErrCantCancelEvent
 		}
 		return nil
 	})
@@ -400,24 +401,31 @@ func (o *orchestratorService) CancelEventWithCleanup(ctx context.Context, eventI
 	wg.Wait()
 	close(errChan)
 	if len(errChan) > 0 {
-		return ErrToRemoveUserFromEvent
+		return customErrors.ErrToRemoveUserFromEvent
 	}
 
+	cancelledEvent, err := o.eventService.CancelledEvent(ctx, eventID)
+	if err != nil {
+		return err
+	}
+	if cancelledEvent == nil || cancelledEvent.Status != domain.StatusCancelled {
+		return customErrors.ErrCantCancelEvent
+	}
 	return nil
 }
 
 func (o *orchestratorService) DeleteEventWithPermissions(ctx context.Context, eventID, requesterID uuid.UUID) error {
 	// проверка на запросы сервака
 	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
-		return ErrTooManyRequests
+		return customErrors.ErrTooManyRequests
 	}
 	// проверка на ошибки в context
 	if err := ctx.Err(); err != nil {
-		return ErrContextCancelled
+		return customErrors.ErrContextCancelled
 	}
 	// проверка на кд по email
 	if !o.checkRateLimitPerEmail(requesterID.String()) {
-		return ErrTooManyRequests
+		return customErrors.ErrTooManyRequests
 	}
 
 	lock := o.getDistributedLock(eventID.String())
@@ -429,7 +437,7 @@ func (o *orchestratorService) DeleteEventWithPermissions(ctx context.Context, ev
 		return err
 	}
 	if !isOwner {
-		return ErrCantDeleteEvent
+		return customErrors.ErrCantDeleteEvent
 	}
 	_ , err = o.eventService.Delete(ctx, eventID)
 	if err != nil {
@@ -441,15 +449,15 @@ func (o *orchestratorService) DeleteEventWithPermissions(ctx context.Context, ev
 func (o *orchestratorService) GetEventFullDetails(ctx context.Context, eventID, requesterID uuid.UUID) (*domain.SystemRole, []domain.EventParticipant, error) {
 	// проверка на запросы сервака
 	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
-		return nil, nil, ErrTooManyRequests
+		return nil, nil, customErrors.ErrTooManyRequests
 	}
 	// проверка на ошибки в context
 	if err := ctx.Err(); err != nil {
-		return nil, nil, ErrContextCancelled
+		return nil, nil, customErrors.ErrContextCancelled
 	}
 	// проверка на кд по email
 	if !o.checkRateLimitPerEmail(requesterID.String()) {
-		return nil, nil,ErrTooManyRequests
+		return nil, nil, customErrors.ErrTooManyRequests
 	}
 	sem := o.getEventSemaphore(eventID.String())
 	sem <- struct{}{}
@@ -492,15 +500,15 @@ func (o *orchestratorService) GetEventFullDetails(ctx context.Context, eventID, 
 func (o *orchestratorService) TransferOwnership(ctx context.Context, currentOwnerID, newOwnerID, eventID uuid.UUID) error {
 	// проверка на запросы сервака
 	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
-		return ErrTooManyRequests
+		return customErrors.ErrTooManyRequests
 	}
 	// проверка на ошибки в context
 	if err := ctx.Err(); err != nil {
-		return ErrContextCancelled
+		return customErrors.ErrContextCancelled
 	}
 	// проверка на кд по email
 	if !o.checkRateLimitPerEmail(currentOwnerID.String()) {
-		return ErrTooManyRequests
+		return customErrors.ErrTooManyRequests
 	}
 	sem := o.getEventSemaphore(eventID.String())
 	sem <- struct{}{}
@@ -515,7 +523,7 @@ func (o *orchestratorService) TransferOwnership(ctx context.Context, currentOwne
 			return err
 		}
 		if !isRequesterOwner {
-			return ErrNotOwner
+			return customErrors.ErrNotOwner
 		}
 		return nil
 	})
@@ -548,15 +556,15 @@ func (o *orchestratorService) TransferOwnership(ctx context.Context, currentOwne
 func (o *orchestratorService) joinEventAsGuest(ctx context.Context, requesterID, userID, eventID uuid.UUID) error {
 	// проверка на запросы сервака
 	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
-		return ErrTooManyRequests
+		return customErrors.ErrTooManyRequests
 	}
 	// проверка на ошибки в context
 	if err := ctx.Err(); err != nil {
-		return ErrContextCancelled
+		return customErrors.ErrContextCancelled
 	}
 	// проверка на кд по email
 	if !o.checkRateLimitPerEmail(userID.String()) {
-		return ErrTooManyRequests
+		return customErrors.ErrTooManyRequests
 	}
 	sem := o.getEventSemaphore(eventID.String())
 	sem <- struct{}{}
@@ -571,7 +579,7 @@ func (o *orchestratorService) joinEventAsGuest(ctx context.Context, requesterID,
 			return err
 		}
 		if isEvent == nil {
-			return ErrEventNotFound
+			return customErrors.ErrEventNotFound
 		}
 		return nil
 	})
@@ -581,7 +589,7 @@ func (o *orchestratorService) joinEventAsGuest(ctx context.Context, requesterID,
 			return err
 		}
 		if isUser == nil {
-			return ErrUserNotFound
+			return customErrors.ErrUserNotFound
 		}
 		return nil
 	})
@@ -604,15 +612,15 @@ func (o *orchestratorService) JoinEventAsGuestPrivate(ctx context.Context, reque
 func (o *orchestratorService) LeaveEventAndFreeSlot(ctx context.Context, userID, eventID uuid.UUID) error {
 	// проверка на запросы сервака
 	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
-		return ErrTooManyRequests
+		return customErrors.ErrTooManyRequests
 	}
 	// проверка на ошибки в context
 	if err := ctx.Err(); err != nil {
-		return ErrContextCancelled
+		return customErrors.ErrContextCancelled
 	}
 	// проверка на кд по email
 	if !o.checkRateLimitPerEmail(userID.String()) {
-		return ErrTooManyRequests
+		return customErrors.ErrTooManyRequests
 	}
 
 	sem := o.getEventSemaphore(eventID.String())
@@ -629,7 +637,7 @@ func (o *orchestratorService) LeaveEventAndFreeSlot(ctx context.Context, userID,
 			return err
 		}
 		if isEvent == nil {
-			return ErrEventNotFound
+			return customErrors.ErrEventNotFound
 		}
 		return nil
 	})
@@ -639,7 +647,7 @@ func (o *orchestratorService) LeaveEventAndFreeSlot(ctx context.Context, userID,
 			return err
 		}
 		if isUser == nil {
-			return ErrUserNotFound
+			return customErrors.ErrUserNotFound
 		}
 		return nil
 	})
@@ -654,15 +662,15 @@ func (o *orchestratorService) LeaveEventAndFreeSlot(ctx context.Context, userID,
 func (o *orchestratorService) AssignStaffWithOutSlotCheck(ctx context.Context, requesterID, targetUserID, eventID uuid.UUID, profRoleID *uint) error {
 	// проверка на запросы сервака
 	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
-		return ErrTooManyRequests
+		return customErrors.ErrTooManyRequests
 	}
 	// проверка на ошибки в context
 	if err := ctx.Err(); err != nil {
-		return ErrContextCancelled
+		return customErrors.ErrContextCancelled
 	}
 	// проверка на кд по email
 	if !o.checkRateLimitPerEmail(targetUserID.String()) {
-		return ErrTooManyRequests
+		return customErrors.ErrTooManyRequests
 	}
 	sem := o.getEventSemaphore(eventID.String())
 	sem <- struct{}{}
@@ -677,7 +685,7 @@ func (o *orchestratorService) AssignStaffWithOutSlotCheck(ctx context.Context, r
 			return err
 		}
 		if isEvent == nil {
-			return ErrEventNotFound
+			return customErrors.ErrEventNotFound
 		}
 		return nil
 	})
@@ -687,7 +695,7 @@ func (o *orchestratorService) AssignStaffWithOutSlotCheck(ctx context.Context, r
 			return err
 		}
 		if isUser == nil {
-			return ErrUserNotFound
+			return customErrors.ErrUserNotFound
 		}
 		return nil
 	})

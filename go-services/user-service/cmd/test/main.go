@@ -25,7 +25,7 @@ func test(name string, err error) {
 }
 
 func main() {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute) //ставим на 10 минут потому что у нас один контекст на все тесты
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute) //ставим на 20 минут потому что у нас один контекст на все тесты
 	defer cancel()
 
 	config := &storage.ConfigDB{

@@ -30,4 +30,4 @@ services:
       - DB_PORT=5432
     depends_on:
       test-db:
-        condition: service_healthy # ⭐ Ждём пока БД будет готова
+        condition: service_healthy

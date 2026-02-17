@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 	"user-service/internal/domain"
+	customErrors "user-service/internal/errors"
 	"user-service/internal/repo"
 
 	"github.com/google/uuid"
@@ -60,10 +61,10 @@ func NewEventService(r repo.EventRepository) EventService {
 
 func (s *eventService) Create(ctx context.Context, title, description, location string, slots int, dateFrom, dateTo time.Time, ownerID uuid.UUID, access domain.Access) (*domain.Event, error) {
 	if err := ctx.Err(); err != nil {
-		return nil, ErrContextCancelled
+		return nil, customErrors.ErrContextCancelled
 	}
 	if title == "" {
-		return nil, ErrNoEventTitle
+		return nil, customErrors.ErrNoEventTitle
 	}
 	
 	event := &domain.Event{
@@ -94,7 +95,7 @@ func (s *eventService) GetByID(ctx context.Context, id uuid.UUID) (*domain.Event
 		return nil, err
 	}
 	if event == nil {
-		return nil, ErrEventNotFound
+		return nil, customErrors.ErrEventNotFound
 	}
 
 	return event, nil
@@ -106,10 +107,10 @@ func (s *eventService) Update(ctx context.Context, input domain.UpdateEventInput
 		return nil, err
 	}
 	if currentEvent == nil {
-		return nil, ErrEventNotFound
+		return nil, customErrors.ErrEventNotFound
 	}
 	if currentEvent.Status == domain.StatusOngoing || currentEvent.Status == domain.StatusCompleted || currentEvent.Status == domain.StatusCancelled {
-		return nil, ErrCantUpdateEvent
+		return nil, customErrors.ErrCantUpdateEvent
 	}
 	updates := make(map[string]interface{})
 	
@@ -142,10 +143,10 @@ func (s *eventService) PublishEvent(ctx context.Context, id uuid.UUID) (*domain.
 		return nil, err
 	}
 	if event == nil {
-		return nil, ErrEventNotFound
+		return nil, customErrors.ErrEventNotFound
 	}
 	if event.Status != domain.StatusDraft {
-		return nil, ErrCantPublishEvent
+		return nil, customErrors.ErrCantPublishEvent
 	}
 	event.Status = domain.StatusAnnounced
 	input := domain.UpdateEventInput{
@@ -166,10 +167,10 @@ func (s *eventService) DraftEvent(ctx context.Context, id uuid.UUID) (*domain.Ev
 		return nil, err
 	}
 	if event == nil {
-		return nil, ErrEventNotFound
+		return nil, customErrors.ErrEventNotFound
 	}
 	if event.Status != domain.StatusAnnounced {
-		return nil, ErrCantDraftEvent
+		return nil, customErrors.ErrCantDraftEvent
 	}
 	event.Status = domain.StatusDraft
 	input := domain.UpdateEventInput{
@@ -190,12 +191,12 @@ func (s *eventService) CancelledEvent(ctx context.Context, id uuid.UUID) (*domai
 		return nil, err
 	}
 	if event == nil {
-		return nil, ErrEventNotFound
+		return nil, customErrors.ErrEventNotFound
 	}
 	if event.Status == domain.StatusDraft || event.Status == domain.StatusAnnounced {
 		event.Status = domain.StatusCancelled
 	} else {
-		return nil, ErrCantCancelEvent
+		return nil, customErrors.ErrCantCancelEvent
 	}
 	
 	input := domain.UpdateEventInput{
@@ -216,12 +217,12 @@ func(s *eventService) Delete(ctx context.Context, id uuid.UUID) (*domain.Event, 
 		return nil, err
 	}
 	if event == nil {
-		return nil, ErrEventNotFound
+		return nil, customErrors.ErrEventNotFound
 	}
 	if event.Status == domain.StatusAnnounced || event.Status == domain.StatusDraft {
 		s.eventRepo.Delete(ctx, id)
 	}else {
-		return nil, ErrDeleteLiveEvent
+		return nil, customErrors.ErrDeleteLiveEvent
 	}
 
 	return nil, nil
@@ -241,8 +242,8 @@ func (s *eventService) GetEventParticipants(ctx context.Context, eventID uuid.UU
 	if err != nil {
 		return nil, err
 	}
-	if participants == nil && len(participants) == 0{
-		return nil, ErrEventNoParticipants
+	if participants == nil || len(participants) == 0{
+		return nil, customErrors.ErrEventNoParticipants
 	}
 	return participants, nil
 }
@@ -253,7 +254,7 @@ func (s *eventService) GetEventsByUserRole(ctx context.Context, userID uuid.UUID
 		return nil, err
 	}
 	if events == nil && len(events) == 0 {
-		return nil, ErrNoEventsWithRole
+		return nil, customErrors.ErrNoEventsWithRole
 	}
 
 	return events, nil
@@ -261,10 +262,10 @@ func (s *eventService) GetEventsByUserRole(ctx context.Context, userID uuid.UUID
 
 func (s *eventService) SetSlots(ctx context.Context, eventID uuid.UUID, slots int) (*domain.Event, error) {
     if err := ctx.Err(); err != nil {
-        return nil, ErrContextCancelled
+        return nil, customErrors.ErrContextCancelled
     }
     if slots <= 0 {
-        return nil, ErrInvalidSlots
+        return nil, customErrors.ErrInvalidSlots
     }
 
     event, err := s.eventRepo.GetByID(ctx, eventID)
@@ -272,11 +273,11 @@ func (s *eventService) SetSlots(ctx context.Context, eventID uuid.UUID, slots in
         return nil, err
     }
     if event == nil {
-        return nil, ErrEventNotFound
+        return nil, customErrors.ErrEventNotFound
     }
 
     if event.Status != domain.StatusDraft && event.Status != domain.StatusAnnounced {
-        return nil, ErrCantUpdateEvent
+        return nil, customErrors.ErrCantUpdateEvent
     }
 
     participants, err := s.eventRepo.GetEventParticipants(ctx, eventID)
@@ -312,7 +313,7 @@ func (s *eventService) OccupySlot(ctx context.Context, eventID uuid.UUID) error 
 	}
 
 	if !ok {
-		return ErrNoSlotsAvailable
+		return customErrors.ErrNoSlotsAvailable
 	}
 
 	return nil
@@ -325,7 +326,7 @@ func (s *eventService) ReleaseSlot(ctx context.Context, eventID uuid.UUID) error
 		return err
 	}
 	if !result {
-		return ErrNoSlotsToRelease 
+		return customErrors.ErrNoSlotsToRelease 
 	}
     return nil
 }
@@ -336,7 +337,7 @@ func (s *eventService) HasAvailableSlots(ctx context.Context, eventID uuid.UUID)
 		return false, err
 	}
 	if !result {
-		return false, ErrNoSlotsAvailable
+		return false, customErrors.ErrNoSlotsAvailable
 	}
 	return true, nil
 }

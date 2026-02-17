@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 	"user-service/internal/domain"
+	customErrors "user-service/internal/errors"
 	"user-service/internal/repo"
 
 	"github.com/golang-jwt/jwt"
@@ -81,23 +82,23 @@ func NewUserService(r repo.UserRepository) UserService {
 func (s *userService) Register(ctx context.Context, email, password, firstName, lastName string) (*domain.User, error) {
 	//тут куча if-ов так как я хз как по другому проверить на фулл ошибки, слой гавнокодика :)
 	if !s.checkRateLimitPerEmail(email) {
-		return nil, ErrTooManyRequests
+		return nil, customErrors.ErrTooManyRequests
 	}
 	if err := ctx.Err(); err != nil {
-		return nil, ErrContextCancelled
+		return nil, customErrors.ErrContextCancelled
 	}
 	if email == "" || password == "" {
-		return nil, ErrValidationFailed
+		return nil, customErrors.ErrValidationFailed
 	}
 	if len(password) < 6 {
-		return nil, ErrShortPassword
+		return nil, customErrors.ErrShortPassword
 	}
 	exist, err := s.userRepo.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, err
 	}
 	if exist != nil {
-		return nil, ErrEmailAlreadyExists
+		return nil, customErrors.ErrEmailAlreadyExists
 	}
 
 
@@ -115,7 +116,7 @@ func (s *userService) Register(ctx context.Context, email, password, firstName, 
 
 	select {
 	case <- ctx.Done():
-		return nil, ErrContextCancelled
+		return nil, customErrors.ErrContextCancelled
 	case err := <- errChan: 
 		return nil, err
 	case hashedPassword := <- passwordChan:
@@ -135,14 +136,14 @@ func (s *userService) Register(ctx context.Context, email, password, firstName, 
 
 func (s *userService) Login(ctx context.Context, email, password string) (*domain.User, error) {
 	if !s.checkRateLimitPerEmail(email) {
-		return nil, ErrTooManyRequests
+		return nil, customErrors.ErrTooManyRequests
 	}
 	user, err := s.userRepo.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, err
 	}
 	if user == nil {
-		return  nil, ErrUserNotFound
+		return  nil, customErrors.ErrUserNotFound
 	}
 	type result struct {
 		valid bool
@@ -157,13 +158,13 @@ func (s *userService) Login(ctx context.Context, email, password string) (*domai
 
 	select{
 	case <- ctx.Done():
-		return nil, ErrContextCancelled
+		return nil, customErrors.ErrContextCancelled
 	case res := <- resultChan:
 		if res.err != nil {
-			return nil, ErrInvalidPassword
+			return nil, customErrors.ErrInvalidPassword
 		}
 		if !res.valid {
-			return nil, ErrInvalidPassword
+			return nil, customErrors.ErrInvalidPassword
 		}
 
 		user.Password = nil
@@ -177,7 +178,7 @@ func (s *userService) GetByID(ctx context.Context, id uuid.UUID) (*domain.User, 
 		return nil, err
 	}
 	if user == nil {
-		return nil, ErrUserNotFound
+		return nil, customErrors.ErrUserNotFound
 	}
 
 	user.Password = nil //очищаем пароль что бы чел через запрос id челика не узнал его парольчик, просто пароль сносим к хуям
@@ -188,11 +189,11 @@ func (s *userService) Update(ctx context.Context, input domain.UpdateUserInput, 
 	updates := make(map[string]interface{})
 
 	CollectUpdates(updates, input.FirstName != nil, "firstName", input.FirstName)
-	CollectUpdates(updates, input.LastName != nil, "firstName", input.LastName)
+	CollectUpdates(updates, input.LastName != nil, "lastName", input.LastName)
 
 	if input.Password != nil {
 		if len(*input.Password) < 6 {
-			return nil, ErrShortPassword
+			return nil, customErrors.ErrShortPassword
 		}
 
 		hashed, err := bcrypt.GenerateFromPassword([]byte(*input.Password), bcrypt.DefaultCost)
@@ -221,7 +222,7 @@ func (s *userService) Delete(ctx context.Context, userID uuid.UUID) (*domain.Use
 		return nil, err
 	}
 	if user == nil {
-		return nil, ErrUserNotFound
+		return nil, customErrors.ErrUserNotFound
 	}
 
 	s.userRepo.Delete(ctx, user)
@@ -250,13 +251,13 @@ func (s *userService) GetUserWithEvents(ctx context.Context, userID uuid.UUID) (
 		return nil, errUser
 	}
 	if user == nil {
-		return nil, ErrUserNotFound
+		return nil, customErrors.ErrUserNotFound
 	}
 	if errEvents != nil {
 		return nil, errEvents
 	}
 	if participations == nil {
-		return nil, ErrNoEvents
+		return nil, customErrors.ErrNoEvents
 	}
 
 	eventsDTO := make([]domain.EventSummaryDTO, len(participations))

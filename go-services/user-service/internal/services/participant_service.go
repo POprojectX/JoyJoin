@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 	"user-service/internal/domain"
+	customErrors "user-service/internal/errors"
 	"user-service/internal/repo"
 
 	"github.com/google/uuid"
@@ -73,12 +74,12 @@ func NewParticipantService(
 
 func (s *participantService) Create(ctx context.Context, participant *domain.EventParticipant) error {
 	if err := ctx.Err(); err != nil {
-		return ErrContextCancelled
+		return customErrors.ErrContextCancelled
 	}
 	
 	key := participant.UserID.String() + ":" + participant.EventID.String() + ":create"
 	if !s.checkRateLimitPerEmail(key) {
-		return ErrTooManyRequests
+		return customErrors.ErrTooManyRequests
 	}
 	
 	return s.participantRepo.Create(ctx, participant)
@@ -86,21 +87,21 @@ func (s *participantService) Create(ctx context.Context, participant *domain.Eve
 
 func (s *participantService) GetByID(ctx context.Context, id uint) (*domain.EventParticipant, error) {
 	if err := ctx.Err(); err != nil {
-		return nil, ErrContextCancelled
+		return nil, customErrors.ErrContextCancelled
 	}
 	return s.participantRepo.GetByID(ctx, id)
 }
 
 func (s *participantService) Update(ctx context.Context, participant *domain.EventParticipant) error {
 	if err := ctx.Err(); err != nil {
-		return ErrContextCancelled
+		return customErrors.ErrContextCancelled
 	}
 	return s.participantRepo.Update(ctx, participant)
 }
 
 func (s *participantService) Delete(ctx context.Context, id uint) error {
 	if err := ctx.Err(); err != nil {
-		return ErrContextCancelled
+		return customErrors.ErrContextCancelled
 	}
 	return s.participantRepo.Delete(ctx, id)
 }
@@ -129,43 +130,43 @@ func (s *participantService) AssignRole(
 	role domain.SystemRole,
 	profRoleID *uint,
 ) error {
+	
 	key := requesterID.String() + ":" + eventID.String() + ":assign"
 	if requesterID == uuid.Nil {
 		key = targetUserID.String() + ":" + eventID.String() + ":assign"
 	}
 	if !s.checkRateLimitPerEmail(key) {
-		return ErrTooManyRequests
+		return customErrors.ErrTooManyRequests
 	}
 
 	if err := ctx.Err(); err != nil {
-        return ErrContextCancelled
+        return customErrors.ErrContextCancelled
     }
 
+	
 	// Проверяем валидность роли для слотов (только Guest занимает слот)
     needsSlot := role == domain.RoleGuest
 
 	existingRole, err := s.participantRepo.GetUserRoleInEvent(ctx, targetUserID, eventID)
     if err == nil && existingRole != "" {
-		return ErrAlreadyParticipant
+		return customErrors.ErrAlreadyParticipant
 	}
 	
 	g, ctx := errgroup.WithContext(ctx)
 
 	var user *domain.User
 	var event *domain.Event
-	var hasRight bool
 
-	g.Go(func() error {
-		var err error
-		hasRight, err = s.participantRepo.HasAnyRole(ctx, requesterID, eventID, domain.RoleOwner, domain.RoleOrganizer)
+	if requesterID != uuid.Nil {
+		// Для назначения ролей нужны права — проверяем синхронно (быстро, один запрос)
+		hasRight, err := s.participantRepo.HasAnyRole(ctx, requesterID, eventID, domain.RoleOwner, domain.RoleOrganizer)
 		if err != nil {
 			return err
 		}
 		if !hasRight {
-			return ErrNotOwner
+			return customErrors.ErrNotOwner
 		}
-		return nil
-	})
+	}
 
 	g.Go(func() error {
 		var err error
@@ -174,7 +175,7 @@ func (s *participantService) AssignRole(
 			return err
 		}
 		if user == nil {
-			return ErrUserNotFound
+			return customErrors.ErrUserNotFound
 		}
 		return nil
 	})
@@ -186,13 +187,13 @@ func (s *participantService) AssignRole(
 			return err
 		}
 		if event == nil {
-			return ErrEventNotFound
+			return customErrors.ErrEventNotFound
 		}
 		if event.Status == domain.StatusCompleted || event.Status == domain.StatusCancelled {
-			return ErrCantBeAssignToEvent
+			return customErrors.ErrCantBeAssignToEvent
 		}
 		if role == domain.RoleGuest && event.Access == domain.AccessPrivate && requesterID == uuid.Nil {
-			return ErrEventIsPrivate
+			return customErrors.ErrEventIsPrivate
 		}
 		return nil
 	})
@@ -203,43 +204,42 @@ func (s *participantService) AssignRole(
 
     // Валидация профессиональной роли
     if profRoleID != nil && role != domain.RoleStaff {
-        return ErrInvalidRole
+        return customErrors.ErrInvalidRole
     }
 
     // === КЛЮЧЕВОЙ МОМЕНТ: атомарное занятие слота ===
-    // Если нужен слот — занимаем ДО создания участника
-    if needsSlot {
-        ok, err := s.eventRepo.TakeSlot(ctx, eventID)
-        if err != nil {
-            return err
-        }
-        if !ok {
-            return ErrNoSlotsAvailable
-        }
-    }
-
     // Создаём участника
     participant := &domain.EventParticipant{
         UserID:             targetUserID,
         EventID:            eventID,
         SystemRole:         role,
         ProfessionalRoleID: profRoleID,
-        Notes:              "Added by " + requesterID.String(),
     }
+	if requesterID != uuid.Nil {
+		participant.Notes = "Added by " + requesterID.String()
+	}else {
+		participant.Notes = "Added by himself"
+	}
 
-    if err := s.participantRepo.Create(ctx, participant); err != nil {
-        // ОТКАТ: если создать не удалось, но слот заняли — освобождаем
-        if needsSlot {
-            // Асинхронно освобождаем, не блокируем ответ
-            go s.eventRepo.FreeUpSlot(context.Background(), eventID)
-        }
-        if isDuplicateError(err) {
-            return ErrAlreadyParticipant
-        }
-        return err
-    }
-
-    return nil
+	// Для Guest используем транзакцию со слотом
+	// Для Staff/Owner/Organizer — обычное создание (без слота)
+	var errSlot error
+	if needsSlot {
+        // Асинхронно освобождаем, не блокируем ответ
+        errSlot = s.participantRepo.CreateWithSlotAtomic(ctx, participant, eventID)
+		if errSlot != nil {
+			return errSlot
+		}
+    }else {
+		errSlot = s.participantRepo.Create(ctx, participant)
+	}
+    if errSlot != nil {
+		if isDuplicateError(errSlot){
+			return customErrors.ErrAlreadyParticipant
+		}
+		return errSlot
+	}
+	return nil
 }
 
 func (s *participantService) ChangeRole(
@@ -249,7 +249,7 @@ func (s *participantService) ChangeRole(
 	newRole domain.SystemRole,
 ) error {
 	if err := ctx.Err(); err != nil {
-		return ErrContextCancelled
+		return customErrors.ErrContextCancelled
 	}
 
 	participant, err := s.participantRepo.GetByID(ctx, participantID)
@@ -258,7 +258,7 @@ func (s *participantService) ChangeRole(
 	}
 
 	if participant.UserID == requesterID {
-		return ErrSelfRoleChange
+		return customErrors.ErrSelfRoleChange
 	}
 
 	requesterRole, err := s.participantRepo.GetUserRoleInEvent(ctx, requesterID, participant.EventID)
@@ -267,7 +267,7 @@ func (s *participantService) ChangeRole(
 	}
 
 	if !s.canChangeRole(requesterRole, participant.SystemRole, newRole) {
-		return ErrNotOwner
+		return customErrors.ErrNotOwner
 	}
 
 	if participant.SystemRole == domain.RoleOwner && newRole != domain.RoleOwner {
@@ -276,7 +276,7 @@ func (s *participantService) ChangeRole(
 			return err
 		}
 		if isLast {
-			return ErrLastOwnerCannotLeave
+			return customErrors.ErrLastOwnerCannotLeave
 		}
 	}
 
@@ -290,7 +290,7 @@ func (s *participantService) RemoveFromEvent(
 	eventID uuid.UUID,
 ) error {
 	if err := ctx.Err(); err != nil {
-		return ErrContextCancelled
+		return customErrors.ErrContextCancelled
 	}
 
 	if requesterID == targetUserID {
@@ -314,7 +314,7 @@ func (s *participantService) SelfRemove(ctx context.Context, userID, eventID uui
     if role == domain.RoleGuest {
         // Не блокируем ответ, логируем ошибку если что
             if _, err := s.eventRepo.FreeUpSlot(ctx, eventID); err != nil {
-				return ErrToRemoveUserFromEvent
+				return customErrors.ErrToRemoveUserFromEvent
             }
     }
 
@@ -343,7 +343,7 @@ func (s *participantService) removeOther(ctx context.Context, requesterID, targe
 	}
 
 	if !canRemove {
-		return ErrNotOwner
+		return customErrors.ErrNotOwner
 	}
 
 	if err := s.participantRepo.RemoveFromEvent(ctx, targetUserID, eventID); err != nil {
@@ -354,7 +354,7 @@ func (s *participantService) removeOther(ctx context.Context, requesterID, targe
 	if targetRole == domain.RoleGuest {
 		go func() {
 			if _, err := s.eventRepo.FreeUpSlot(context.Background(), eventID); err != nil {
-				errChan <- ErrToReleaseSlot
+				errChan <- customErrors.ErrToReleaseSlot
 			}else {
 				errChan <- nil
 			}
@@ -381,7 +381,7 @@ func (s *participantService) GetParticipantByUserID(ctx context.Context, userID,
 		}
 	}
 	if participant == nil {
-		return nil, ErrParticipantNotFound
+		return nil, customErrors.ErrParticipantNotFound
 	}
 	return participant, nil
 }
