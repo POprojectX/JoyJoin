@@ -4,8 +4,9 @@ import (
 	"user-service/internal/domain"
 	customErrors "user-service/internal/errors"
 
+	"context"
+
 	"github.com/google/uuid"
-	"golang.org/x/net/context"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )

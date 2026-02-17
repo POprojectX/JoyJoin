@@ -189,8 +189,10 @@ func (s *participantService) AssignRole(
 		if event == nil {
 			return customErrors.ErrEventNotFound
 		}
-		if event.Status == domain.StatusCompleted || event.Status == domain.StatusCancelled {
-			return customErrors.ErrCantBeAssignToEvent
+		if requesterID == uuid.Nil {
+			if event.Status != domain.StatusAnnounced && event.Status != domain.StatusOngoing {
+				return customErrors.ErrEventIsPrivate
+			}
 		}
 		if role == domain.RoleGuest && event.Access == domain.AccessPrivate && requesterID == uuid.Nil {
 			return customErrors.ErrEventIsPrivate

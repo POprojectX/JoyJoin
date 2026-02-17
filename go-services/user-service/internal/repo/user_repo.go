@@ -41,7 +41,7 @@ func (r *userRepo) Create(ctx context.Context, user *domain.User) error {
 	default:
 	}
 	// BeforeCreate хук в GORM автоматически генерирует UUID
-	return r.db.Create(user).Error
+	return r.db.WithContext(ctx).Create(user).Error
 }
 
 // GetByID - получение по UUID

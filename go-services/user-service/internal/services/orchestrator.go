@@ -103,7 +103,9 @@ func NewEventOrchestrator(
         // }),
         taskQueue: make(chan func(), 10000), // 10к воркеров
 		rateMap: make(map[string]time.Time),
-		rateLimit: time.Second, // 1 секунда кд для запроса у пользователя
+		//rateLimit: time.Second,
+		//ВНИМАНИЕ!!!! для тестов лучше использовать:
+		rateLimit: time.Millisecond, // 1 миллисекунда кд для запроса у пользователя
     }
     
     o.starterWorkerPool(20) // воркеры для фоновых задач
