@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"log"
 	"sync"
 	"time"
 	"user-service/internal/domain"
@@ -10,7 +9,6 @@ import (
 	"user-service/internal/repo"
 
 	"github.com/google/uuid"
-	"golang.org/x/sync/errgroup"
 )
 
 type ParticipantService interface {
@@ -143,7 +141,6 @@ func (s *participantService) AssignRole(
 	if err := ctx.Err(); err != nil {
         return customErrors.ErrContextCancelled
     }
-
 	
 	// Проверяем валидность роли для слотов (только Guest занимает слот)
     needsSlot := role == domain.RoleGuest
@@ -152,21 +149,48 @@ func (s *participantService) AssignRole(
     if err == nil && existingRole != "" {
 		return customErrors.ErrAlreadyParticipant
 	}
-	
-	g, ctx := errgroup.WithContext(ctx)
 
-	defer func() {
-		if r := recover(); r!= nil {
-			log.Printf("DEBUG AssignRole: PANIC: %v", r)
-		}
-		if ctx.Err() != nil {
-			log.Printf("DEBUG AssignRole: context canceled, err=%v", ctx.Err())
-		}
-	}()
+	// Паралельные задачи
+	var wg sync.WaitGroup
+	wg.Add(2)
 
 	var user *domain.User
+	var userErr error
 	var event *domain.Event
+	var eventErr error
 
+	go func() {
+		defer wg.Done()
+		user, userErr = s.userRepo.GetByID(ctx, targetUserID)
+	}()
+
+	go func() {
+		defer wg.Done()
+		event, eventErr = s.eventRepo.GetByID(ctx, eventID)
+	}()
+
+	wg.Wait()
+	 if userErr != nil {
+        return userErr
+    }
+    if user == nil {
+        return customErrors.ErrUserNotFound
+    }
+
+    if eventErr != nil {
+        return eventErr
+    }
+    if event == nil {
+        return customErrors.ErrEventNotFound
+    }
+	if requesterID == uuid.Nil {
+		if event.Status != domain.StatusAnnounced && event.Status != domain.StatusOngoing {
+			return customErrors.ErrCantBeAssignToEvent
+		}
+		if event.Access == domain.AccessPrivate {
+			return customErrors.ErrEventIsPrivate
+		}
+	}
 
 	if requesterID != uuid.Nil {
 		// Для назначения ролей нужны права — проверяем синхронно (быстро, один запрос)
@@ -177,42 +201,6 @@ func (s *participantService) AssignRole(
 		if !hasRight {
 			return customErrors.ErrNotOwner
 		}
-	}
-
-	g.Go(func() error {
-		var err error
-		user, err = s.userRepo.GetByID(ctx, targetUserID)
-		if err != nil {
-			return err
-		}
-		if user == nil {
-			return customErrors.ErrUserNotFound
-		}
-		return nil
-	})
-
-	g.Go(func() error {
-		var err error
-		event, err = s.eventRepo.GetByID(ctx, eventID)
-		if err != nil {
-			return err
-		}
-		if event == nil {
-			return customErrors.ErrEventNotFound
-		}
-		if requesterID == uuid.Nil {
-			if event.Status != domain.StatusAnnounced && event.Status != domain.StatusOngoing {
-				return customErrors.ErrEventIsPrivate
-			}
-		}
-		if role == domain.RoleGuest && event.Access == domain.AccessPrivate && requesterID == uuid.Nil {
-			return customErrors.ErrEventIsPrivate
-		}
-		return nil
-	})
-
-	if err := g.Wait(); err != nil {
-		return err
 	}
 
     // Валидация профессиональной роли
