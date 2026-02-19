@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"log"
 	"sync"
 	"time"
 	"user-service/internal/domain"
@@ -154,8 +155,18 @@ func (s *participantService) AssignRole(
 	
 	g, ctx := errgroup.WithContext(ctx)
 
+	defer func() {
+		if r := recover(); r!= nil {
+			log.Printf("DEBUG AssignRole: PANIC: %v", r)
+		}
+		if ctx.Err() != nil {
+			log.Printf("DEBUG AssignRole: context canceled, err=%v", ctx.Err())
+		}
+	}()
+
 	var user *domain.User
 	var event *domain.Event
+
 
 	if requesterID != uuid.Nil {
 		// Для назначения ролей нужны права — проверяем синхронно (быстро, один запрос)
