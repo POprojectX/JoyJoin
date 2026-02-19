@@ -295,7 +295,7 @@ func (o *orchestratorService) CreateEventWithOwner(ctx context.Context, title, d
 		JoinedAt: time.Now(),
 		Notes: "Creator of the event.",
 	}
-	if err := o.participantService.Create(ctx, participant); err != nil {
+	if err = o.participantService.Create(ctx, participant); err != nil {
 		return nil, err
 	}
 	return event, nil

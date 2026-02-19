@@ -66,16 +66,22 @@ func (r *participantRepo) CreateWithSlotAtomic(ctx context.Context, participant 
 			if event.AvailableSlots <= 0 {
 				return customErrors.ErrNoSlotsAvailable
 			}
-			// Уменьшаем слоты
-			if err := tx.Model(&domain.Event{}).
-				Where("id = ?", eventID).
-				Update("available_slots", gorm.Expr("available_slots - 1")).Error; err != nil {
-				return err
+			result := tx.Model(&domain.Event{}).Where("id = ? AND available_slots > 0 AND status IN ('Announced', 'Ongoing')", eventID).
+			UpdateColumn("available_slots", gorm.Expr("available_slots - 1"))
+
+			if result.Error != nil {
+				return result.Error
+			}
+			if result.RowsAffected == 0 {
+				return customErrors.ErrNoSlotsAvailable
 			}
 		}
 		
 		// 4. Создаём участника
-		return tx.Create(participant).Error
+		if err := tx.Create(participant).Error; err != nil {
+            return err
+        }
+		return nil
 	})
 }
 
