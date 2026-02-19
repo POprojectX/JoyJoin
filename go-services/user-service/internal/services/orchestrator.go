@@ -565,9 +565,9 @@ func (o *orchestratorService) joinEventAsGuest(ctx context.Context, requesterID,
 		return customErrors.ErrContextCancelled
 	}
 	// проверка на кд по email
-	if !o.checkRateLimitPerEmail(userID.String()) {
-		return customErrors.ErrTooManyRequests
-	}
+	// if !o.checkRateLimitPerEmail(userID.String()) {
+	// 	return customErrors.ErrTooManyRequests
+	// }
 	sem := o.getEventSemaphore(eventID.String())
 	sem <- struct{}{}
 	defer func() {<-sem}()

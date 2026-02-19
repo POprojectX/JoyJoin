@@ -340,8 +340,13 @@ func main() {
 		5, time.Now().Add(24*time.Hour), time.Now().Add(48*time.Hour),
 		user2.ID, domain.AccessPrivate,
 	)
-	orchestrator.PublishEventAtomic(ctx, privateEvent.ID, user2.ID)
-
+	time.Sleep(2 * time.Second)
+	var errPublish error
+	privateEvent, errPublish = orchestrator.PublishEventAtomic(ctx, privateEvent.ID, user2.ID)
+	if errPublish != nil {
+		test("Error to publish event: ", errPublish)
+	}
+	log.Println("Status of current event: ", privateEvent.Status)
 	time.Sleep(2 * time.Second)
 	// 27. Попытка публичного присоединения к приватному
 	randomUserEmail := fmt.Sprintf("random_%d@test.com", time.Now().Unix())
