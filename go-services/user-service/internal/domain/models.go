@@ -75,7 +75,7 @@ type Event struct {
 	OwnerID     uuid.UUID `gorm:"type:uuid;index;not null"`
 	CreatedAt   time.Time `gorm:"index"`
 	UpdatedAt   time.Time
-
+	
 	Participants []EventParticipant `gorm:"foreignKey:EventID"`
 }
 

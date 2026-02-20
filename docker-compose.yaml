@@ -35,9 +35,12 @@ services:
       - JoyJoin
     depends_on:
       - user-service
+    restart: unless-stopped
 
   user-service:
-    build: ./go-services/user-service
+    build:
+      context: ./go-services/user-service
+      dockerfile: Dockerfile
     container_name: backend-user-service
     environment:
       - DB_HOST=db-user-service
@@ -45,6 +48,7 @@ services:
       - DB_PASSWORD=password
       - DB_NAME=joyjoin_db
       - DB_PORT=5432
+      - JWT_SECRET=${JWT_SECRET:-dev-secret-key-change-in-prod}
     depends_on:
       db-user-service:
         condition: service_healthy

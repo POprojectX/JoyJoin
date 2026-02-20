@@ -28,7 +28,7 @@ type ParticipantService interface {
  	GetParticipantByUserID(ctx context.Context, userID, eventID uuid.UUID) (*domain.EventParticipant, error)
 	
 	// Batch операции
-	AssignRolesBulk(ctx context.Context, requesterID, eventID uuid.UUID, assignments []RoleAssignment) []BulkResult
+	//AssignRolesBulk(ctx context.Context, requesterID, eventID uuid.UUID, assignments []RoleAssignment) []BulkResult
 }
 
 type RoleAssignment struct {

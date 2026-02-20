@@ -403,7 +403,11 @@ func main() {
 		5, time.Now().Add(24*time.Hour), time.Now().Add(48*time.Hour),
 		user2.ID, domain.AccessPublic,
 	)
-	orchestrator.PublishEventAtomic(ctx, concurrentEvent.ID, user2.ID)
+	time.Sleep(2 * time.Second)
+	_, errPublushEv := orchestrator.PublishEventAtomic(ctx, concurrentEvent.ID, user2.ID)
+	if errPublushEv != nil {
+		test("error to publish event: ", errPublushEv)
+	}
 	time.Sleep(2 * time.Second)
 
 	// Создаём 10 гостей

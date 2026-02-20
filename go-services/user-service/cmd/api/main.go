@@ -4,10 +4,8 @@ import (
 	"context"
 	"log"
 	"os"
-	"os/signal"
-	"syscall"
-	"time"
 	"user-service/internal/domain"
+	httpdelivery "user-service/internal/http"
 	"user-service/internal/repo"
 	"user-service/internal/services"
 	"user-service/internal/storage"
@@ -50,27 +48,11 @@ func main() {
 
 	ctx := context.Background()
 
-	//Тестирование методов 
-	userDTO, tocken, err := orchestrator.RegisterAndCreateProfile(ctx, "test@example.com", "password", "Danil", "Kolbasenko")
-	if err != nil {
-		log.Printf("Error during registration: %v", err)
-	}
-	log.Printf("Registered user: %+v, Token: %s", userDTO, tocken)
-	time.Sleep(2 * time.Second)
+	//указатель на authService нужен потому что у нас все сервисвы сделаны через интерфейсы, которые сами по себе уже ссылочный тип,
+	//а authService работает через структуру поэтому нужен указатель на структуру
+	h := httpdelivery.NewHandler(userService, eventService, participantService, *authService, orchestrator, ctx)
 
-	userDTO2, tocken2, err := orchestrator.LoginAndGetProfile(ctx, "test@example.com", "password")
-	if err != nil {
-		log.Printf("Error during login: %v", err)
-	}
-	log.Printf("Logged in user: %+v, Token: %s", userDTO2, tocken2)
-
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-	
-	log.Println("🚀 Service running. Press Ctrl+C to stop.")
-	<-sigChan
-	
-	log.Println("👋 Shutting down...")
+	httpdelivery.Run(h, ":8080")
 }
 
 func getEnv(key, defaultValue string) string {
