@@ -37,12 +37,18 @@ async function sendEmail(data) {
     //here we will use values for our email from the producer(json/etc...)
     //Example:
     //from = data.from, and then from: from
+   const verificationLink = `http://localhost:5000/verify?=${data.token}`;
+  //const verificationLink = `http://localhost:5000/verify?=hello`;
     const email = await resend.emails.send({
       from: 'Acme <onboarding@resend.dev>',
       to: ['podbodniykirill@gmail.com'],
-      subject: 'Testing',
-      html: '<strong>It works!</strong>' 
+      subject: 'Email verification',
+      html: `<h2>Email Verification</h2>
+    <p>Click the button below to verify your email:</p>
+<a href="${verificationLink}" style="padding:10px 20px; background:black; color:white;text-decoration:none;">
+Verify email</a>`
     });
 
     console.log("Email sent:" + email);
 };
+
