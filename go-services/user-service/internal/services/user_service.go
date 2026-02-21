@@ -11,6 +11,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/api/idtoken"
 )
 
 type AuthService struct {
@@ -35,12 +36,12 @@ func (s *AuthService) GenerateToken(userID uuid.UUID) (string, error) {
 	return token.SignedString([]byte(s.secretKey))
 }
 
-
 //user-service
 type UserService interface {
 	// Auth
 	Register(ctx context.Context, email, password, firstName, lastName string) (*domain.User, error)
 	Login(ctx context.Context, email, password string) (*domain.User, error)
+	LoginWithGoogle(ctx context.Context, googleToken string) (*domain.User, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.User, error)
 	
 	// CRUD
@@ -124,7 +125,7 @@ func (s *userService) Register(ctx context.Context, email, password, firstName, 
 			Email:     email,
 			FirstName: firstName,
 			LastName:  lastName,
-			Password:  hashedPassword,
+			Password:  &hashedPassword,
 		}
 		if err := s.userRepo.Create(ctx, user); err != nil {
 			return nil, err
@@ -152,7 +153,7 @@ func (s *userService) Login(ctx context.Context, email, password string) (*domai
 	resultChan := make(chan result, 1)
 
 	go func () {
-		err := bcrypt.CompareHashAndPassword(user.Password, []byte(password))
+		err := bcrypt.CompareHashAndPassword(*user.Password, []byte(password))
 		resultChan <- result{valid: err == nil, err: err}
 	}()
 
@@ -170,6 +171,35 @@ func (s *userService) Login(ctx context.Context, email, password string) (*domai
 		user.Password = nil
 		return user, nil
 	}
+}
+
+func (s *userService) LoginWithGoogle(ctx context.Context, googleToken string) (*domain.User, error) {
+	payload, err := idtoken.Validate(ctx, googleToken, "341995701456-5fmqbdnsgmgi2evu63bbjhkr00321jb8.apps.googleusercontent.com")
+	if err != nil {
+		return nil, customErrors.ErrInvalidGoogleToken
+	}
+
+	email := payload.Claims["email"].(string)
+	firstName := payload.Claims["given_name"].(string)
+	lastName := payload.Claims["family_name"].(string)
+
+	user, err := s.userRepo.GetByEmail(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		user = &domain.User{
+			Email: email,
+			FirstName: firstName,
+            LastName:  lastName,
+            Password:  nil,
+		}
+		if err := s.userRepo.Create(ctx, user); err != nil {
+			return nil, err
+		}
+	}
+
+	return user, nil
 }
 
 func (s *userService) GetByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {

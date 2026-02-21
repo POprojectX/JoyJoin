@@ -41,7 +41,7 @@ func main() {
 	userService := services.NewUserService(userRepo)
 	eventService := services.NewEventService(eventRepo)
 	participantService := services.NewParticipantService(participantRepo, eventRepo, userRepo)
-	authService := services.NewAuthService(userRepo, getEnv("JWT_SECRET", "your-secret-key"))
+	authService := services.NewAuthService(userRepo, getEnv("JWT_SECRET", "DanilTopRonaldoTop"))
 
 	// Оркестратор
 	orchestrator := services.NewEventOrchestrator(userService, eventService, participantService, authService)

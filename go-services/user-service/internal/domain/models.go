@@ -45,7 +45,7 @@ type User struct {
 	Email string `gorm:"uniqueIndex;not null;size:255"`
 	FirstName string    `gorm:"size:100"`
 	LastName  string    `gorm:"size:100"`
-	Password  []byte    `gorm:"not null"` // храним как bytes так как сам хеш у нас в байтах
+	Password  *[]byte   `gorm:"column:password"` // храним как bytes так как сам хеш у нас в байтах
 	CreatedAt time.Time `gorm:"index"`
 	UpdatedAt time.Time
 	
@@ -75,7 +75,7 @@ type Event struct {
 	OwnerID     uuid.UUID `gorm:"type:uuid;index;not null"`
 	CreatedAt   time.Time `gorm:"index"`
 	UpdatedAt   time.Time
-	
+
 	Participants []EventParticipant `gorm:"foreignKey:EventID"`
 }
 

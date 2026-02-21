@@ -17,6 +17,7 @@ type OrchestratorService interface {
 	// ==================== AUTH & USER ====================
 	RegisterAndCreateProfile(ctx context.Context, email, password, firstName, lastName string) (*domain.UserWithEventsDTO, string, error) // возвращает user + JWT
 	LoginAndGetProfile(ctx context.Context, email, password string) (*domain.UserWithEventsDTO, string, error)
+	LoginWithGoogleAndGetProfile(ctx context.Context, googleToken string) (*domain.UserWithEventsDTO, string, error)
 	GetUserFullProfile(ctx context.Context, userID uuid.UUID) (*domain.User, error)
 	DeleteUserAndCleanup(ctx context.Context, userID uuid.UUID) error // удаляет пользователя + все участия
 
@@ -212,6 +213,36 @@ func (o *orchestratorService) LoginAndGetProfile(ctx context.Context, email, pas
 	}
 
 	return dto, jwt, nil
+}
+
+func (o *orchestratorService) LoginWithGoogleAndGetProfile(ctx context.Context, googleToken string) (*domain.UserWithEventsDTO, string, error){
+	user, err := o.userService.LoginWithGoogle(ctx, googleToken)
+	if err != nil {
+		return nil, "", err
+	}
+	var (
+        jwt string
+        dto *domain.UserWithEventsDTO
+    )
+	g, _ := errgroup.WithContext(ctx)
+
+    g.Go(func() error {
+        var err error
+        jwt, err = o.authService.GenerateToken(user.ID)
+        return err
+    })
+    
+    g.Go(func() error {
+        var err error
+        dto, err = o.userService.GetUserWithEvents(ctx, user.ID)
+        return err
+    })
+
+    if err := g.Wait(); err != nil {
+        return nil, "", err
+    }
+
+    return dto, jwt, nil
 }
 
 func (o *orchestratorService) GetUserFullProfile(ctx context.Context, userID uuid.UUID) (*domain.User, error) {
