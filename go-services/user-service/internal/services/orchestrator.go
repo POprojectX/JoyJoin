@@ -21,7 +21,7 @@ type OrchestratorService interface {
 	GetUserFullProfile(ctx context.Context, userID uuid.UUID) (*domain.User, error)
 	DeleteUserAndCleanup(ctx context.Context, userID uuid.UUID) error // удаляет пользователя + все участия
 
-	// ==================== EVENT MANAGEMENT ====================
+	// ==================== EVENT MANAGEMENT ===================
 	CreateEventWithOwner(ctx context.Context, title, description, location string, slots int, dateFrom, dateTo time.Time, ownerID uuid.UUID, access domain.Access) (*domain.Event, error)
 	PublishEventAtomic(ctx context.Context, eventID, requesterID uuid.UUID) (*domain.Event, error) // проверяет права + публикует
 	CancelEventWithCleanup(ctx context.Context, eventID, requesterID uuid.UUID) error              // отмена + уведомление участников (async)
