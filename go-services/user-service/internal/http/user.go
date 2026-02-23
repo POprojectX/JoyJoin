@@ -41,27 +41,6 @@ func (h *Handler) Login() http.HandlerFunc {
 			return 
 		}
 		
-		// authorization := w.Header().Get("Authorization")
-		// if authorization != "" {
-		// 	middleware.ParseJWT("DanilTopRonaldoTop")
-		// 	uuidUser, err := uuid.Parse(r.Context().Value("userID").(string))
-		// 	if err != nil {
-		// 		http.Error(w, "invalid uuid type", http.StatusBadRequest)
-		// 		return
-		// 	}
-		// 	user, err := h.Orchestrator.GetUserFullProfile(r.Context(), uuidUser)
-		// 	responce := map[string]interface{} {
-		// 		"id": user.ID,
-		// 		"Email": user.Email,
-		// 		"first_name": user.FirstName,
-		// 		"last_name": user.LastName,
-		// 		"events_count": user.EventsCount,
-		// 		"participations": user.Participations,
-		// 	}
-		// 	w.Header().Set("Content-Type", "application/json")
-		// 	w.WriteHeader(http.StatusAccepted)
-		// 	json.NewEncoder(w).Encode(responce)
-		// }
 		dto, jwt, err := h.Orchestrator.LoginAndGetProfile(r.Context(), req.Email, req.Password)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
