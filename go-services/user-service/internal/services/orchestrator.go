@@ -24,6 +24,7 @@ type OrchestratorService interface {
 	// ==================== EVENT MANAGEMENT ===================
 	CreateEventWithOwner(ctx context.Context, title, description, location string, slots int, dateFrom, dateTo time.Time, ownerID uuid.UUID, access domain.Access) (*domain.Event, error)
 	PublishEventAtomic(ctx context.Context, eventID, requesterID uuid.UUID) (*domain.Event, error) // проверяет права + публикует
+	DraftEvent(ctx context.Context, eventID, requesterID uuid.UUID) (*domain.Event, error)
 	CancelEventWithCleanup(ctx context.Context, eventID, requesterID uuid.UUID) error              // отмена + уведомление участников (async)
 	DeleteEventWithPermissions(ctx context.Context, eventID, requesterID uuid.UUID) error          // проверка прав + удаление
 
@@ -359,6 +360,40 @@ func (o *orchestratorService) PublishEventAtomic(ctx context.Context, eventID, r
 	}
 
 	event, err := o.eventService.PublishEvent(ctx, eventID)
+	if err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
+func (o *orchestratorService) DraftEvent(ctx context.Context, eventID, requesterID uuid.UUID) (*domain.Event, error) {
+	// проверка на запросы сервака
+	if err := o.orchestratorLimiter.Wait(ctx); err != nil {
+		return nil, customErrors.ErrTooManyRequests
+	}
+	// проверка на ошибки в context
+	if err := ctx.Err(); err != nil {
+		return nil, customErrors.ErrContextCancelled
+	}
+	// проверка на кд по email
+	if !o.checkRateLimitPerEmail(requesterID.String()) {
+		return nil, customErrors.ErrTooManyRequests
+	}
+	// локамем наш ивент что бы если вдруг другой овнер решил его опопубликовать в то же время, то второй запрос будет ждать пока первый не закончится
+	lock := o.getDistributedLock(eventID.String())
+	lock.Lock()
+	defer lock.Unlock()
+
+	isOwner, err := o.participantService.IsUserOwner(ctx, requesterID, eventID)
+	if err != nil {
+		return nil, customErrors.ErrNotOwner
+	}
+	
+	if !isOwner {
+		return nil, customErrors.ErrCantDraftEvent
+	}
+
+	event, err := o.eventService.DraftEvent(ctx, eventID)
 	if err != nil {
 		return nil, err
 	}

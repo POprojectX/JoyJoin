@@ -64,6 +64,30 @@ func (h *Handler) PublishEventAtomic() http.HandlerFunc {
 	}
 }
 
+func (h *Handler) DraftEvent() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			EventID uuid.UUID `json:"event_id"`
+			RequesterID uuid.UUID `json:"requester_id"`
+		}
+
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		_, err := h.Orchestrator.DraftEvent(r.Context(), req.EventID, req.RequesterID)
+		if err != nil {
+			http.Error(w, "failed to draft event", http.StatusInternalServerError)
+			return 
+		}
+		responce := fmt.Sprintf("event: %v was successfully drafted by %v", req.EventID, req.RequesterID)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(responce)
+	}
+}
+
 func (h *Handler) CancelEventWithCleanup() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
@@ -114,3 +138,57 @@ func (h *Handler) DeleteEventWithPermissions() http.HandlerFunc {
 	}
 }
 
+func (h *Handler) GetEventByUserRole() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			UserRole string `json:"user_role"`
+			RequesterID uuid.UUID `json:"requester_id"`
+		}
+		
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		events, err := h.EvenService.GetEventsByUserRole(r.Context(), req.RequesterID, domain.SystemRole(req.UserRole))
+		if err != nil {
+			http.Error(w, "failed to get events", http.StatusInternalServerError)
+			return
+		}
+		response := struct {
+			Events []domain.Event `json:"events"`
+			Count  int            `json:"count"`
+			User   uuid.UUID      `json:"requester_id"`
+		}{
+			Events: events,
+			Count:  len(events),
+			User: req.RequesterID,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+	}
+}
+
+func (h *Handler) HasAailableSlots() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			EventID uuid.UUID `json:"event_id"`
+		}
+		
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		isSlot, err := h.EvenService.HasAvailableSlots(r.Context(), req.EventID)
+		if err != nil {
+			http.Error(w, "failed to check slots", http.StatusInternalServerError)
+			return 
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(isSlot)
+	}
+}

@@ -25,8 +25,11 @@ func (h *Handler) Routes() http.Handler {
 	//event routes
 	mux.Handle("/createEvent", h.CreateEventWithOwner())
 	mux.Handle("/publishEvent", h.PublishEventAtomic())
+	mux.Handle("/draftEvent", h.DraftEvent())
 	mux.Handle("/cancelEvent", h.CancelEventWithCleanup())
 	mux.Handle("/deleteEvent", h.DeleteEventWithPermissions())
+	mux.Handle("/getEventsBuUserSlot", h.GetEventByUserRole())
+	mux.Handle("/hasSlots", h.HasAailableSlots())
 
 	//participant routes
 	mux.Handle("/joinEventAsGuestPublic", h.JoinEventAsGuestPublic())
