@@ -20,6 +20,7 @@ type EventRepository interface {
 	GetEventParticipants(ctx context.Context, eventID uuid.UUID) ([]domain.EventParticipant, error)
 	// Получить события по системной роли пользователя
 	GetEventsByUserRole(ctx context.Context, userID uuid.UUID, role domain.SystemRole) ([]domain.Event, error)
+	GetEventsByLocation(ctx context.Context, location string) ([]domain.Event, error)
 	HasAvailableSlots(ctx context.Context, eventID uuid.UUID) (bool, error)
 	TakeSlot(ctx context.Context, eventID uuid.UUID) (bool, error)
 	FreeUpSlot(ctx context.Context, eventID uuid.UUID) (bool, error)
@@ -90,6 +91,15 @@ func (r *eventRepo) GetEventsByUserRole(ctx context.Context, userID uuid.UUID, r
 		Joins("JOIN event_participants ON event_participants.event_id = events.id").
 		Where("event_participants.user_id = ? AND event_participants.system_role = ?", userID, role).
 		Find(&events).Error
+	return events, err
+}
+
+func (r *eventRepo) GetEventsByLocation(ctx context.Context, location string) ([]domain.Event, error) {
+	var events []domain.Event
+	err := r.db.WithContext(ctx).
+		Where("location = ?", location).
+		Find(&events).Error
+
 	return events, err
 }
 

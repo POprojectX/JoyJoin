@@ -24,6 +24,7 @@ type EventService interface {
 	GetEventParticipants(ctx context.Context, eventID uuid.UUID) ([]domain.EventParticipant, error)
 	// Получить события по системной роли пользователя
 	GetEventsByUserRole(ctx context.Context, userID uuid.UUID, role domain.SystemRole) ([]domain.Event, error)
+	GetEventsByLocation(ctx context.Context, location string) ([]domain.Event, error)
 
 	SetSlots(ctx context.Context, eventID uuid.UUID, slots int) (*domain.Event, error)
     OccupySlot(ctx context.Context, eventID uuid.UUID) error
@@ -91,6 +92,18 @@ func (s *eventService) Create(ctx context.Context, title, description, location 
 
 func (s *eventService) GetByID(ctx context.Context, id uuid.UUID) (*domain.Event, error) {
 	event, err := s.eventRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if event == nil {
+		return nil, customErrors.ErrEventNotFound
+	}
+
+	return event, nil
+}
+
+func (s *eventService) GetEventsByLocation(ctx context.Context, location string) ([]domain.Event, error) {
+	event, err := s.eventRepo.GetEventsByLocation(ctx, location)
 	if err != nil {
 		return nil, err
 	}

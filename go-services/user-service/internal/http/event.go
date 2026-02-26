@@ -171,6 +171,29 @@ func (h *Handler) GetEventByUserRole() http.HandlerFunc {
 	}
 }
 
+func (h *Handler) GetEventsByLocatoin() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Location string `json:"location"`
+		}
+
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		events, err := h.EvenService.GetEventsByLocation(r.Context(), req.Location)
+		if err != nil {
+			http.Error(w, "failed to get events", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(events)
+	}
+}
+
 func (h *Handler) HasAailableSlots() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req struct {

@@ -29,6 +29,7 @@ func (h *Handler) Routes() http.Handler {
 	mux.Handle("/cancelEvent", h.CancelEventWithCleanup())
 	mux.Handle("/deleteEvent", h.DeleteEventWithPermissions())
 	mux.Handle("/getEventsBuUserSlot", h.GetEventByUserRole())
+	mux.Handle("/getEventsByLocation", h.GetEventsByLocatoin())
 	mux.Handle("/hasSlots", h.HasAailableSlots())
 
 	//participant routes
