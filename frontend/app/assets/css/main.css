@@ -1,2 +1,50 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap");
 @import "tailwindcss";
 @import "@nuxt/ui";
+
+:root {
+  --bg: #f5f3ff;
+  --bg2: #ede9fe;
+  --surface: #ffffff;
+  --border: #e5e0f8;
+  --violet: #7c3aed;
+  --violet2: #6d28d9;
+  --violet3: #5b21b6;
+  --violet-s: #ede9fe;
+  --violet-m: #ddd6fe;
+  --gold: #a78bfa;
+  --teal: #8b5cf6;
+  --ink: #1e1433;
+  --ink2: #3b2f68;
+  --muted: #6e5fa8;
+  --soft: #a898d4;
+  --sh-sm: 0 2px 12px rgba(109, 40, 217, 0.08);
+  --sh-md: 0 8px 28px rgba(109, 40, 217, 0.13);
+  --sh-lg: 0 20px 56px rgba(109, 40, 217, 0.18);
+  --r-xl: 24px;
+  --r-lg: 18px;
+  --r-md: 12px;
+  --r-sm: 8px;
+  --font-d: "DM Serif Display", serif;
+  --font-b: "DM Sans", sans-serif;
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #0f0a1e;
+  --bg2: #1a1133;
+  --surface: #160d2e;
+  --border: #2a1f4a;
+  --ink: #f0ebff;
+  --ink2: #c4b5fd;
+  --muted: #a898d4;
+  --bg2: #1a1133;
+  --border: #2a1f4a;
+  --soft: #6e5fa8;
+  --sh-sm: 0 2px 12px rgba(0, 0, 0, 0.3);
+  --sh-md: 0 8px 28px rgba(0, 0, 0, 0.4);
+  --sh-lg: 0 20px 56px rgba(0, 0, 0, 0.5);
+  --violet-s: rgba(124, 58, 237, 0.18);
+  --violet-m: rgba(124, 58, 237, 0.3);
+  color-scheme: dark;
+}
