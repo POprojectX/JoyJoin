@@ -2,7 +2,7 @@
   <div class="page">
     <div class="shell">
       <aside class="sidebar">
-        <div class="logo">
+        <div class="logo" id="tgt-logo">
           <div class="logo-icon">
             <svg
               width="18"
@@ -21,7 +21,7 @@
           <span class="logo-name">JoyJoin</span>
         </div>
 
-        <div class="profile-card">
+        <div class="profile-card" id="tgt-profile">
           <div class="avatar-ring">
             <span class="avatar-letter">{{ user.name[0] }}</span>
           </div>
@@ -29,21 +29,25 @@
           <p class="profile-role">{{ user.role }}</p>
           <div class="profile-stats">
             <div class="pstat">
-              <span class="pstat-val">14</span>
-              <span class="pstat-lbl">Joined</span>
+              <span class="pstat-val">14</span
+              ><span class="pstat-lbl">Joined</span>
             </div>
             <div class="pstat-div" />
             <div class="pstat">
-              <span class="pstat-val">3</span>
-              <span class="pstat-lbl">Hosted</span>
+              <span class="pstat-val">3</span
+              ><span class="pstat-lbl">Hosted</span>
             </div>
             <div class="pstat-div" />
             <div class="pstat">
-              <span class="pstat-val">89</span>
-              <span class="pstat-lbl">Friends</span>
+              <span class="pstat-val">89</span
+              ><span class="pstat-lbl">Friends</span>
             </div>
           </div>
-          <button class="btn-create" @click="showCreateModal = true">
+          <button
+            class="btn-create"
+            id="tgt-create"
+            @click="showCreateModal = true"
+          >
             <svg
               width="13"
               height="13"
@@ -58,7 +62,7 @@
           </button>
         </div>
 
-        <nav class="nav">
+        <nav class="nav" id="tgt-nav">
           <span class="nav-label">Main</span>
           <button
             v-for="item in navItems"
@@ -81,7 +85,6 @@
           </button>
 
           <div class="nav-divider" />
-
           <span class="nav-label">Account</span>
           <button class="nav-item" @click="activeTab = 'settings'">
             <svg
@@ -99,7 +102,6 @@
             </svg>
             Settings
           </button>
-
           <button class="nav-item nav-logout">
             <svg
               width="18"
@@ -117,7 +119,7 @@
           </button>
         </nav>
 
-        <div class="sidebar-promo">
+        <div class="sidebar-promo" id="tgt-promo">
           <div class="promo-glow" />
           <p class="promo-label">✨ Pro Plan</p>
           <p class="promo-text">
@@ -128,7 +130,7 @@
       </aside>
 
       <main class="main">
-        <div class="hero">
+        <div class="hero" id="tgt-hero">
           <div class="hero-canvas">
             <div class="hero-blobs">
               <div class="blob blob1" />
@@ -140,7 +142,7 @@
           </div>
 
           <div class="hero-top">
-            <div class="search-wrap">
+            <div class="search-wrap" id="tgt-search">
               <svg
                 width="15"
                 height="15"
@@ -158,7 +160,11 @@
                 class="search-input"
               />
             </div>
-            <button class="notif-btn" @click="notifOpen = !notifOpen">
+            <button
+              class="notif-btn"
+              id="tgt-notif"
+              @click="notifOpen = !notifOpen"
+            >
               <svg
                 width="18"
                 height="18"
@@ -172,37 +178,6 @@
               </svg>
               <span class="notif-dot" />
             </button>
-            <button
-              class="theme-btn"
-              @click="toggleTheme"
-              :title="colorMode.value === 'dark' ? 'Light mode' : 'Dark mode'"
-            >
-              <svg
-                v-if="colorMode.value === 'dark'"
-                width="18"
-                height="18"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                viewBox="0 0 24 24"
-              >
-                <circle cx="12" cy="12" r="5" />
-                <path
-                  d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
-                />
-              </svg>
-              <svg
-                v-else
-                width="18"
-                height="18"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                viewBox="0 0 24 24"
-              >
-                <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
-              </svg>
-            </button>
           </div>
 
           <div class="hero-bottom">
@@ -212,20 +187,26 @@
             </h1>
             <p class="hero-sub">Here's what's happening around you today.</p>
             <div class="hero-meta">
-              <span class="hero-stat">
-                <span class="hero-stat-dot" style="background: #a78bfa" />
-                {{ events.length }} upcoming events
-              </span>
+              <span class="hero-stat"
+                ><span class="hero-stat-dot" style="background: #a78bfa" />{{
+                  events.length
+                }}
+                upcoming events</span
+              >
               <span class="hero-sep">·</span>
-              <span class="hero-stat">
-                <span class="hero-stat-dot" style="background: #34d399" />
-                {{ newsFeed.length }} new articles
-              </span>
+              <span class="hero-stat"
+                ><span class="hero-stat-dot" style="background: #34d399" />{{
+                  newsFeed.length
+                }}
+                new articles</span
+              >
               <span class="hero-sep">·</span>
-              <span class="hero-stat">
-                <span class="hero-stat-dot" style="background: #f59e0b" />
-                Opole, PL
-              </span>
+              <span class="hero-stat"
+                ><span
+                  class="hero-stat-dot"
+                  style="background: #f59e0b"
+                />Opole, PL</span
+              >
             </div>
           </div>
 
@@ -245,7 +226,7 @@
           </div>
         </div>
 
-        <div class="filter-row">
+        <div class="filter-row" id="tgt-filters">
           <button
             v-for="f in filters"
             :key="f.id"
@@ -280,8 +261,7 @@
                 </svg>
               </button>
             </div>
-
-            <div class="news-list">
+            <div class="news-list" id="tgt-news">
               <div
                 v-for="(a, i) in filteredNews"
                 :key="a.id"
@@ -317,18 +297,6 @@
                 </div>
               </div>
               <div v-if="filteredNews.length === 0" class="empty">
-                <svg
-                  width="32"
-                  height="32"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  viewBox="0 0 24 24"
-                  style="display: block; margin: 0 auto 8px"
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <path d="m21 21-4.35-4.35" />
-                </svg>
                 No articles found
               </div>
             </div>
@@ -354,8 +322,7 @@
                 </svg>
               </button>
             </div>
-
-            <div class="events-grid">
+            <div class="events-grid" id="tgt-events">
               <div
                 v-for="(ev, i) in filteredEvents"
                 :key="ev.id"
@@ -434,27 +401,13 @@
                 class="empty"
                 style="grid-column: 1/-1"
               >
-                <svg
-                  width="32"
-                  height="32"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  viewBox="0 0 24 24"
-                  style="display: block; margin: 0 auto 8px"
-                >
-                  <rect x="3" y="4" width="18" height="18" rx="2" />
-                  <line x1="16" y1="2" x2="16" y2="6" />
-                  <line x1="8" y1="2" x2="8" y2="6" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
                 No events found
               </div>
             </div>
           </section>
 
           <div class="col-full">
-            <div class="featured-card">
+            <div class="featured-card" id="tgt-featured">
               <div class="featured-visual">
                 <div class="featured-orbs">
                   <div class="forb forb1" />
@@ -465,17 +418,15 @@
               <div class="featured-body">
                 <div class="featured-eyebrow">
                   <span class="featured-tag">Featured · This weekend</span>
-                  <span class="featured-live">
-                    <span class="live-dot" />
-                    Selling fast
-                  </span>
+                  <span class="featured-live"
+                    ><span class="live-dot" />Selling fast</span
+                  >
                 </div>
                 <h3 class="featured-title">Summer Beach Party — Opole</h3>
                 <p class="featured-desc">
                   Join hundreds of people at Proszkowski Beach for an
                   unforgettable night of music, fireworks, and good vibes. Open
                   bar until midnight, live DJ sets, and a laser show at 23:00.
-                  Limited spots — grab yours now.
                 </p>
                 <div class="featured-chips">
                   <span class="chip">🎵 Live Music</span>
@@ -520,7 +471,7 @@
             </div>
           </div>
 
-          <div class="col-full stats-row">
+          <div class="col-full stats-row" id="tgt-stats">
             <div v-for="s in quickStats" :key="s.label" class="stat-card">
               <div class="stat-icon">{{ s.icon }}</div>
               <div>
@@ -534,7 +485,7 @@
           </div>
 
           <div class="col-full">
-            <div class="cal-section">
+            <div class="cal-section" id="tgt-calendar">
               <div class="cal-header">
                 <div>
                   <h2 class="cal-title">{{ calMonthName }} {{ calYear }}</h2>
@@ -642,7 +593,7 @@
                 </svg>
               </button>
             </div>
-            <div class="friends-list">
+            <div class="friends-list" id="tgt-friends">
               <div v-for="f in friends" :key="f.name" class="friend-card">
                 <div class="friend-av" :style="{ background: f.color }">
                   {{ f.name[0] }}
@@ -744,11 +695,143 @@
         </div>
       </div>
     </Transition>
+
+    <div
+      v-if="tutActive"
+      class="tut-blocker"
+      @wheel.prevent
+      @touchmove.prevent
+      @scroll.prevent
+    />
+
+    <Transition name="tut-fade">
+      <div v-if="tutActive" class="tut-overlay-wrap">
+        <svg class="tut-svg" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <mask id="tut-mask">
+              <rect width="100%" height="100%" fill="white" />
+              <rect
+                :x="holeRect.x"
+                :y="holeRect.y"
+                :width="holeRect.w"
+                :height="holeRect.h"
+                :rx="holeRect.rx"
+                fill="black"
+              />
+            </mask>
+          </defs>
+          <rect
+            width="100%"
+            height="100%"
+            fill="rgba(12,0,30,0.76)"
+            mask="url(#tut-mask)"
+          />
+        </svg>
+
+        <div
+          class="tut-pulse"
+          :style="{
+            left: holeRect.x - 6 + 'px',
+            top: holeRect.y - 6 + 'px',
+            width: holeRect.w + 12 + 'px',
+            height: holeRect.h + 12 + 'px',
+          }"
+        />
+      </div>
+    </Transition>
+
+    <Transition name="tut-card">
+      <div
+        v-if="tutActive"
+        class="tut-card"
+        :style="{ top: cardPos.top + 'px', left: cardPos.left + 'px' }"
+      >
+        <div class="tut-header">
+          <div class="tut-step-badge">
+            <span class="tut-step-dot" />
+            Step {{ currentStep + 1 }} of {{ steps.length }}
+          </div>
+          <div class="tut-title">{{ steps[currentStep].title }}</div>
+        </div>
+        <div class="tut-body">
+          <p class="tut-desc">{{ steps[currentStep].desc }}</p>
+
+          <div class="tut-progress">
+            <div
+              v-for="i in steps.length"
+              :key="i"
+              class="tut-dot"
+              :class="{
+                active: i - 1 === currentStep,
+                done: i - 1 < currentStep,
+              }"
+            />
+          </div>
+
+          <div class="tut-actions">
+            <button class="tut-skip" @click="closeTutorial">
+              Skip tutorial
+            </button>
+            <div class="tut-btns">
+              <button
+                v-if="currentStep > 0"
+                class="tut-btn-prev"
+                @click="prevStep"
+              >
+                ← Back
+              </button>
+              <button class="tut-btn-next" @click="nextStep">
+                <template v-if="currentStep < steps.length - 1">
+                  Next
+                  <svg
+                    width="12"
+                    height="12"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </template>
+                <template v-else>🎉 Finish</template>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <Transition name="tut-done">
+      <div v-if="tutDone" class="tut-done-overlay">
+        <div class="tut-done-card">
+          <span class="tut-done-emoji">🎉</span>
+          <div class="tut-done-title">You're all set!</div>
+          <p class="tut-done-sub">
+            You've completed the JoyJoin tour. Start exploring events near you
+            and connect with friends right now.
+          </p>
+          <button class="tut-done-btn" @click="closeTutorial">
+            <svg
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              viewBox="0 0 24 24"
+            >
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+            Start exploring
+          </button>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
 
 const activeTab = ref("hub");
 const activeFilter = ref("all");
@@ -768,6 +851,15 @@ const timeOfDay = computed(() => {
   return "evening";
 });
 
+const todayStr = computed(() =>
+  new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }),
+);
+
 const navItems = [
   {
     id: "hub",
@@ -778,11 +870,6 @@ const navItems = [
     id: "events",
     label: "Events",
     icon: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
-  },
-  {
-    id: "services",
-    label: "Services",
-    icon: '<path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/>',
   },
   {
     id: "guests",
@@ -851,7 +938,7 @@ const newsFeed = ref([
     tagColor: "#065f46",
     thumbBg: "linear-gradient(135deg,#d1fae5,#a7f3d0)",
     title: "Live Concert Series Announced",
-    desc: "Three-day outdoor festival with local bands and international headliners. Gates open at 5 PM.",
+    desc: "Three-day outdoor festival with local bands and international headliners.",
     time: "1d ago",
     author: "Anna Nowak",
     authorColor: "#10b981",
@@ -864,7 +951,7 @@ const newsFeed = ref([
     tagColor: "#c2410c",
     thumbBg: "linear-gradient(135deg,#ffedd5,#fed7aa)",
     title: "City Run 10K — Sign Ups Open",
-    desc: "The annual city run is back. Register early to secure your spot and grab a special early-bird discount.",
+    desc: "The annual city run is back. Register early to secure your spot.",
     time: "1d ago",
     author: "Kamil Piotrowiak",
     authorColor: "#ef4444",
@@ -877,7 +964,7 @@ const newsFeed = ref([
     tagColor: "#7e22ce",
     thumbBg: "linear-gradient(135deg,#fae8ff,#f3e8ff)",
     title: "Gallery Night: Local Artists Showcase",
-    desc: "Seven emerging artists open their studios to the public. Wine, live painting, and conversation.",
+    desc: "Seven emerging artists open their studios to the public. Wine, live painting.",
     time: "2d ago",
     author: "Zofia Jabłońska",
     authorColor: "#a855f7",
@@ -956,7 +1043,7 @@ const events = ref([
     gradient: "linear-gradient(135deg,#1c1917,#44403c)",
     colors: ["#92400e", "#d97706", "#6B7280"],
     category: "Music",
-    desc: "An open-air jazz concert featuring three ensembles performing classic standards and original compositions.",
+    desc: "An open-air jazz concert featuring three ensembles performing classic standards.",
     favorited: false,
     tags: ["music", "today"],
   },
@@ -971,7 +1058,7 @@ const events = ref([
     gradient: "linear-gradient(135deg,#7f1d1d,#b91c1c)",
     colors: ["#dc2626", "#ef4444", "#6B7280"],
     category: "Food",
-    desc: "Explore flavours from Thailand, Japan, Vietnam and Korea. 20+ food stalls, cooking demos and eating challenges.",
+    desc: "Explore flavours from Thailand, Japan, Vietnam and Korea. 20+ food stalls.",
     favorited: false,
     tags: ["food", "weekend"],
   },
@@ -1019,41 +1106,30 @@ const friends = [
 
 const eventDays = new Set([1, 5, 8, 12, 15, 19, 22, 26, 28]);
 
-const todayStr = computed(() =>
-  new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  }),
-);
-
 const filteredNews = computed(() => {
   const q = searchQuery.value.toLowerCase();
-  const base = newsFeed.value;
-  if (!q) return base;
-  return base.filter(
-    (n) =>
-      n.title.toLowerCase().includes(q) || n.desc.toLowerCase().includes(q),
-  );
+  return q
+    ? newsFeed.value.filter(
+        (n) =>
+          n.title.toLowerCase().includes(q) || n.desc.toLowerCase().includes(q),
+      )
+    : newsFeed.value;
 });
 
 const filteredEvents = computed(() => {
   const q = searchQuery.value.toLowerCase();
   const f = activeFilter.value;
   let list = events.value;
-  if (f !== "all") {
+  if (f !== "all")
     list = list.filter(
       (e) => e.tags.includes(f) || e.category.toLowerCase() === f,
     );
-  }
-  if (q) {
+  if (q)
     list = list.filter(
       (e) =>
         e.title.toLowerCase().includes(q) ||
         e.location.toLowerCase().includes(q),
     );
-  }
   return list;
 });
 
@@ -1083,7 +1159,6 @@ const calCells = computed(() => {
   const daysInPrev = new Date(y, m, 0).getDate();
   const today = new Date();
   const cells = [];
-
   for (let i = firstDay - 1; i >= 0; i--)
     cells.push({
       key: `p${i}`,
@@ -1093,7 +1168,6 @@ const calCells = computed(() => {
       hasEvent: false,
       isSelected: false,
     });
-
   for (let d = 1; d <= daysInMonth; d++) {
     const isToday =
       d === today.getDate() &&
@@ -1108,7 +1182,6 @@ const calCells = computed(() => {
       isSelected: selectedCalDay.value === d,
     });
   }
-
   const rem = 42 - cells.length;
   for (let d = 1; d <= rem; d++)
     cells.push({
@@ -1119,7 +1192,6 @@ const calCells = computed(() => {
       hasEvent: false,
       isSelected: false,
     });
-
   return cells;
 });
 
@@ -1128,17 +1200,247 @@ function prevMonth() {
   d.setMonth(d.getMonth() - 1);
   calDate.value = d;
 }
-
 function nextMonth() {
   const d = new Date(calDate.value);
   d.setMonth(d.getMonth() + 1);
   calDate.value = d;
 }
-const colorMode = useColorMode();
 
-function toggleTheme() {
-  colorMode.preference = colorMode.value === "dark" ? "light" : "dark";
+const tutActive = ref(false);
+const tutDone = ref(false);
+const currentStep = ref(0);
+
+const holeRect = ref({ x: 0, y: 0, w: 0, h: 0, rx: 14 });
+const cardPos = ref({ top: 0, left: 0 });
+
+const steps = [
+  {
+    target: "tgt-logo",
+    title: "Welcome to JoyJoin 🎉",
+    desc: "JoyJoin is your all-in-one social hub for discovering, joining, and hosting local events. This quick tour walks you through every feature in under 2 minutes.",
+    pad: 12,
+    side: "right",
+  },
+  {
+    target: "tgt-profile",
+    title: "Your Profile Card",
+    desc: "See your personal stats at a glance — events joined, events hosted, and the size of your friends network. Click any stat to drill in further.",
+    pad: 8,
+    side: "right",
+  },
+  {
+    target: "tgt-create",
+    title: "Create an Event",
+    desc: 'Ready to host? Hit "Create event" to set up your own gathering — add a description, invite friends, pick a location, and go live instantly.',
+    pad: 6,
+    side: "right",
+  },
+  {
+    target: "tgt-nav",
+    title: "Main Navigation",
+    desc: "Switch between your Hub, the Events calendar, Guests manager, and Messages from here. The badge on Messages shows unread conversations.",
+    pad: 8,
+    side: "right",
+  },
+  {
+    target: "tgt-search",
+    title: "Search Everything",
+    desc: "Type anything — event names, venues, or people — to instantly filter both the news feed and the events grid in real time.",
+    pad: 10,
+    side: "bottom",
+  },
+  {
+    target: "tgt-filters",
+    title: "Filter by Category",
+    desc: "Narrow down what you see by time (Today, This Weekend) or by vibe (Music, Food, Sports, Art, Outdoor). Combine with search for laser-sharp results.",
+    pad: 8,
+    side: "bottom",
+  },
+  {
+    target: "tgt-news",
+    title: "Latest News Feed",
+    desc: "Stay in the loop with curated event news from local authors. Each article is tagged by category and links directly to the full story.",
+    pad: 10,
+    side: "right",
+  },
+  {
+    target: "tgt-events",
+    title: "Events Near You",
+    desc: 'Browse events close to your location. Click any card for full details. Hit the ♡ heart to save favourites, or "Join" to RSVP straight away.',
+    pad: 10,
+    side: "left",
+  },
+  {
+    target: "tgt-featured",
+    title: "Featured Event",
+    desc: "The spotlight card highlights the must-attend event of the week. Chips show exactly what's included. Spots fill fast — grab yours early!",
+    pad: 12,
+    side: "top",
+  },
+  {
+    target: "tgt-stats",
+    title: "Your Activity Stats",
+    desc: "Track how active you've been — events attended, new friends made, your community rating, and achievements unlocked.",
+    pad: 10,
+    side: "top",
+  },
+  {
+    target: "tgt-calendar",
+    title: "Event Calendar",
+    desc: "Navigate months to see upcoming events. Days with a dot have events scheduled. Click a day to see what's on. Today is always highlighted in violet.",
+    pad: 10,
+    side: "top",
+  },
+  {
+    target: "tgt-friends",
+    title: "Friends Going",
+    desc: "See which friends are attending events this week. Staying connected is effortless — if a friend joins, you're more likely to show up too.",
+    pad: 10,
+    side: "top",
+  },
+  {
+    target: "tgt-promo",
+    title: "✨ Go Pro",
+    desc: "Upgrade to Pro for unlimited event creation, priority discovery ranking, advanced analytics, and exclusive community badges.",
+    pad: 8,
+    side: "right",
+  },
+];
+
+function lockPage() {
+  document.body.style.overflow = "hidden";
+  document.body.style.userSelect = "none";
 }
+function unlockPage() {
+  document.body.style.overflow = "";
+  document.body.style.userSelect = "";
+}
+
+function getTargetRect(id) {
+  return document.getElementById(id)?.getBoundingClientRect() ?? null;
+}
+
+function positionCard(rect, side) {
+  const cardEl = document.querySelector(".tut-card");
+  const cardW = cardEl?.offsetWidth || 340;
+  const cardH = cardEl?.offsetHeight || 260;
+  const gap = 22;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  let top, left;
+
+  if (side === "right") {
+    top = rect.top + rect.height / 2 - cardH / 2;
+    left = rect.right + gap;
+    if (left + cardW > vw - 12) {
+      left = rect.left - cardW - gap;
+    }
+  } else if (side === "left") {
+    top = rect.top + rect.height / 2 - cardH / 2;
+    left = rect.left - cardW - gap;
+    if (left < 12) {
+      left = rect.right + gap;
+    }
+  } else if (side === "bottom") {
+    top = rect.bottom + gap;
+    left = rect.left + rect.width / 2 - cardW / 2;
+  } else {
+    // top
+    top = rect.top - cardH - gap;
+    left = rect.left + rect.width / 2 - cardW / 2;
+  }
+
+  top = Math.max(12, Math.min(top, vh - cardH - 12));
+  left = Math.max(12, Math.min(left, vw - cardW - 12));
+  return { top, left };
+}
+
+async function renderStep(idx) {
+  const step = steps[idx];
+  if (!step) return;
+
+  const el = document.getElementById(step.target);
+  if (el) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+  await new Promise((r) => setTimeout(r, 180));
+
+  const rect = getTargetRect(step.target);
+  if (!rect) return;
+
+  const pad = step.pad ?? 10;
+
+  holeRect.value = {
+    x: rect.left - pad,
+    y: rect.top - pad,
+    w: rect.width + pad * 2,
+    h: rect.height + pad * 2,
+    rx: 14,
+  };
+
+  await nextTick();
+  cardPos.value = positionCard(rect, step.side);
+}
+
+async function startTutorial() {
+  currentStep.value = 0;
+  tutActive.value = true;
+  tutDone.value = false;
+  lockPage();
+  await nextTick();
+  renderStep(0);
+}
+
+async function nextStep() {
+  if (currentStep.value < steps.length - 1) {
+    currentStep.value++;
+    await renderStep(currentStep.value);
+  } else {
+    // Finish
+    tutActive.value = false;
+    tutDone.value = true;
+  }
+}
+
+async function prevStep() {
+  if (currentStep.value > 0) {
+    currentStep.value--;
+    await renderStep(currentStep.value);
+  }
+}
+
+function closeTutorial() {
+  tutActive.value = false;
+  tutDone.value = false;
+  unlockPage();
+}
+
+function onKeyDown(e) {
+  if (!tutActive.value && !tutDone.value) return;
+  if (tutDone.value) {
+    if (e.key === "Escape" || e.key === "Enter") closeTutorial();
+    return;
+  }
+  if (e.key === "ArrowRight" || e.key === "Enter") nextStep();
+  if (e.key === "ArrowLeft") prevStep();
+  if (e.key === "Escape") closeTutorial();
+}
+
+function onResize() {
+  if (tutActive.value) renderStep(currentStep.value);
+}
+
+onMounted(() => {
+  document.addEventListener("keydown", onKeyDown);
+  window.addEventListener("resize", onResize);
+  // Auto-start after a short delay
+  setTimeout(startTutorial, 700);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener("keydown", onKeyDown);
+  window.removeEventListener("resize", onResize);
+  unlockPage();
+});
 </script>
 
 <style scoped>
@@ -1219,7 +1521,6 @@ input {
   height: 100vh;
   overflow-y: auto;
 }
-
 .logo {
   display: flex;
   align-items: center;
@@ -1229,19 +1530,17 @@ input {
 .logo-icon {
   width: 36px;
   height: 36px;
-  background: linear-gradient(135deg, var(--violet) 0%, var(--violet3) 100%);
+  background: linear-gradient(135deg, var(--violet), var(--violet3));
   border-radius: var(--r-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
   box-shadow: 0 4px 12px rgba(109, 40, 217, 0.3);
 }
 .logo-name {
   font-family: var(--font-d);
   font-size: 22px;
   color: var(--ink);
-  letter-spacing: -0.01em;
 }
 
 .profile-card {
@@ -1256,7 +1555,7 @@ input {
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--violet) 0%, #a78bfa 100%);
+  background: linear-gradient(135deg, var(--violet), #a78bfa);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1273,14 +1572,12 @@ input {
 .profile-name {
   font-size: 14px;
   font-weight: 600;
-  color: var(--ink);
 }
 .profile-role {
   font-size: 12px;
   color: var(--muted);
   margin-top: 2px;
 }
-
 .profile-stats {
   display: flex;
   align-items: center;
@@ -1299,7 +1596,6 @@ input {
 .pstat-val {
   font-size: 15px;
   font-weight: 700;
-  color: var(--ink);
   line-height: 1;
 }
 .pstat-lbl {
@@ -1315,7 +1611,7 @@ input {
 .btn-create {
   margin-top: 12px;
   width: 100%;
-  background: linear-gradient(135deg, var(--violet) 0%, var(--violet3) 100%);
+  background: linear-gradient(135deg, var(--violet), var(--violet3));
   color: white;
   border-radius: var(--r-md);
   padding: 9px 16px;
@@ -1333,9 +1629,6 @@ input {
 .btn-create:hover {
   transform: translateY(-1px);
   box-shadow: 0 6px 22px rgba(109, 40, 217, 0.4);
-}
-.btn-create:active {
-  transform: scale(0.97);
 }
 
 .nav {
@@ -1369,18 +1662,12 @@ input {
   opacity: 0.7;
   transition: opacity 0.18s;
 }
-.nav-item:hover {
-  background: var(--violet-s);
-  color: var(--violet);
-}
-.nav-item:hover svg {
-  opacity: 1;
-}
+.nav-item:hover,
 .nav-item.active {
   background: var(--violet-s);
   color: var(--violet);
-  font-weight: 600;
 }
+.nav-item:hover svg,
 .nav-item.active svg {
   opacity: 1;
 }
@@ -1392,8 +1679,6 @@ input {
   font-weight: 700;
   padding: 2px 7px;
   border-radius: 20px;
-  min-width: 20px;
-  text-align: center;
 }
 .nav-divider {
   height: 1px;
@@ -1410,14 +1695,15 @@ input {
 
 .sidebar-promo {
   margin-top: 12px;
-  background: linear-gradient(135deg, #2e1065 0%, #4c1d95 100%);
+  background: linear-gradient(135deg, #2e1065, #4c1d95);
   border-radius: var(--r-lg);
   padding: 16px;
   position: relative;
-  overflow: hidden;
 }
 .promo-glow {
-  position: absolute;
+  align-items: center;
+  justify-content: center;
+  display: flex;
   inset: 0;
   background: radial-gradient(
     circle at 80% 20%,
@@ -1467,7 +1753,6 @@ input {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
 }
 .hero-canvas {
   position: absolute;
@@ -1519,7 +1804,6 @@ input {
   --dur: 11s;
   opacity: 0.2;
 }
-
 .hero-grain {
   position: absolute;
   inset: 0;
@@ -1572,15 +1856,6 @@ input {
 .search-input::placeholder {
   color: rgba(255, 255, 255, 0.45);
 }
-.search-kbd {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-  padding: 2px 5px;
-  font-family: var(--font-b);
-  flex-shrink: 0;
-}
 .notif-btn {
   width: 40px;
   height: 40px;
@@ -1589,7 +1864,6 @@ input {
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: white;
-  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1608,21 +1882,6 @@ input {
   border-radius: 50%;
   background: #f59e0b;
   border: 2px solid #4c1d95;
-}
-.hero-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--violet), #c4b5fd);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-d);
-  font-size: 16px;
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  flex-shrink: 0;
-  cursor: pointer;
 }
 
 .hero-bottom {
@@ -1672,7 +1931,6 @@ input {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  flex-shrink: 0;
 }
 .hero-sep {
   color: rgba(255, 255, 255, 0.25);
@@ -1682,25 +1940,11 @@ input {
 .hero-ticker {
   position: relative;
   z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 0;
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(8px);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   padding: 8px 0;
   overflow: hidden;
-}
-.ticker-label {
-  flex-shrink: 0;
-  font-size: 11px;
-  font-weight: 700;
-  color: #f59e0b;
-  background: rgba(245, 158, 11, 0.15);
-  padding: 3px 14px;
-  letter-spacing: 0.05em;
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
-  margin-right: 16px;
 }
 .ticker-track {
   display: flex;
@@ -1711,11 +1955,6 @@ input {
 .ticker-item {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.55);
-  cursor: pointer;
-  transition: color 0.2s;
-}
-.ticker-item:hover {
-  color: rgba(255, 255, 255, 0.85);
 }
 @keyframes ticker {
   0% {
@@ -1763,7 +2002,6 @@ input {
   padding: 28px 36px 40px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto;
   gap: 24px;
   flex: 1;
 }
@@ -1774,7 +2012,7 @@ input {
   grid-column: 2;
 }
 .col-full {
-  grid-column: 1 / -1;
+  grid-column: 1/-1;
 }
 
 .section-head {
@@ -1786,7 +2024,6 @@ input {
 .section-title {
   font-family: var(--font-d);
   font-size: 20px;
-  color: var(--ink);
   line-height: 1.1;
 }
 .section-sub {
@@ -1872,7 +2109,6 @@ input {
 .news-title {
   font-size: 13px;
   font-weight: 600;
-  color: var(--ink);
   line-height: 1.35;
 }
 .news-desc {
@@ -1904,7 +2140,6 @@ input {
   font-size: 9px;
   font-weight: 700;
   color: white;
-  flex-shrink: 0;
 }
 .btn-read {
   font-size: 12px;
@@ -1913,10 +2148,6 @@ input {
   padding: 4px 10px;
   border-radius: 20px;
   background: var(--violet-s);
-  transition: background 0.18s;
-}
-.btn-read:hover {
-  background: var(--violet-m);
 }
 
 .events-grid {
@@ -2009,7 +2240,6 @@ input {
 .event-title {
   font-size: 13px;
   font-weight: 600;
-  color: var(--ink);
   line-height: 1.3;
 }
 .event-loc {
@@ -2060,7 +2290,6 @@ input {
 .ev-join:hover {
   background: var(--violet-m);
 }
-
 .ev-bg-a {
   background: #f5f0ff;
 }
@@ -2083,12 +2312,11 @@ input {
 .featured-card {
   display: flex;
   align-items: stretch;
-  background: linear-gradient(135deg, #2e1065 0%, #4c1d95 100%);
+  background: linear-gradient(135deg, #2e1065, #4c1d95);
   border-radius: var(--r-xl);
   overflow: hidden;
   box-shadow: var(--sh-lg);
   min-height: 190px;
-  animation: fadeUp 0.5s ease both;
   transition:
     transform 0.22s,
     box-shadow 0.22s;
@@ -2105,7 +2333,7 @@ input {
   justify-content: center;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #1e0a4e 0%, #3b0764 100%);
+  background: linear-gradient(135deg, #1e0a4e, #3b0764);
 }
 .featured-orbs {
   position: absolute;
@@ -2272,7 +2500,6 @@ input {
   transition:
     transform 0.2s,
     box-shadow 0.2s;
-  cursor: default;
 }
 .stat-card:hover {
   transform: translateY(-2px);
@@ -2280,14 +2507,12 @@ input {
 }
 .stat-icon {
   font-size: 24px;
-  flex-shrink: 0;
 }
 .stat-val {
   font-size: 20px;
   font-weight: 700;
-  color: var(--ink);
-  line-height: 1;
   font-family: var(--font-d);
+  line-height: 1;
 }
 .stat-lbl {
   font-size: 11px;
@@ -2300,7 +2525,6 @@ input {
   font-weight: 700;
   padding: 3px 7px;
   border-radius: 20px;
-  flex-shrink: 0;
 }
 .stat-trend.up {
   background: #ecfdf5;
@@ -2316,7 +2540,6 @@ input {
   border-radius: var(--r-xl);
   border: 1px solid var(--border);
   padding: 24px;
-  animation: fadeUp 0.5s 0.2s ease both;
 }
 .cal-header {
   display: flex;
@@ -2327,7 +2550,6 @@ input {
 .cal-title {
   font-family: var(--font-d);
   font-size: 20px;
-  color: var(--ink);
 }
 .cal-sub {
   font-size: 12px;
@@ -2336,7 +2558,6 @@ input {
 }
 .cal-nav {
   display: flex;
-  align-items: center;
   gap: 4px;
 }
 .cal-nav-btn {
@@ -2381,11 +2602,11 @@ input {
   justify-content: center;
   font-size: 12px;
   color: var(--muted);
+  position: relative;
+  cursor: pointer;
   transition:
     background 0.15s,
     color 0.15s;
-  position: relative;
-  cursor: pointer;
 }
 .cal-day:hover {
   background: var(--bg);
@@ -2437,11 +2658,8 @@ input {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  flex-shrink: 0;
 }
 
-.friends-section {
-}
 .friends-list {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -2477,7 +2695,6 @@ input {
   font-family: var(--font-d);
   font-size: 18px;
   color: white;
-  flex-shrink: 0;
 }
 .friend-info {
   flex: 1;
@@ -2486,7 +2703,6 @@ input {
 .friend-name {
   font-size: 12px;
   font-weight: 600;
-  color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2591,7 +2807,6 @@ input {
 .modal-title {
   font-family: var(--font-d);
   font-size: 22px;
-  color: var(--ink);
   line-height: 1.2;
   margin-bottom: 6px;
 }
@@ -2632,23 +2847,7 @@ input {
   border-color: var(--violet-m);
   color: var(--violet);
 }
-.theme-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: white;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s;
-}
-.theme-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
+
 .modal-enter-active,
 .modal-leave-active {
   transition:
@@ -2670,6 +2869,288 @@ input {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.tut-blocker {
+  position: fixed;
+  inset: 0;
+  z-index: 7900;
+  cursor: default;
+  /* Prevent touch scroll on mobile */
+  touch-action: none;
+  overscroll-behavior: contain;
+}
+
+.tut-overlay-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 8000;
+  pointer-events: none; /* clicks pass through to tut-card / tut-blocker */
+}
+.tut-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.tut-pulse {
+  position: fixed;
+  z-index: 8010;
+  pointer-events: none;
+  border-radius: 20px;
+  animation: tutPulse 2.2s ease-in-out infinite;
+}
+@keyframes tutPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 14px rgba(124, 58, 237, 0);
+  }
+}
+
+.tut-card {
+  position: fixed;
+  z-index: 8100;
+  width: 340px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow:
+    0 32px 80px rgba(30, 0, 60, 0.28),
+    0 0 0 1px rgba(124, 58, 237, 0.15);
+}
+
+.tut-header {
+  background: linear-gradient(135deg, #7c3aed, #5b21b6);
+  border-radius: 20px 20px 0 0;
+  padding: 20px 22px 18px;
+  position: relative;
+  overflow: hidden;
+}
+.tut-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 80% 30%,
+    rgba(196, 181, 253, 0.35),
+    transparent 60%
+  );
+}
+.tut-step-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-bottom: 10px;
+  position: relative;
+}
+.tut-step-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #c4b5fd;
+  flex-shrink: 0;
+}
+.tut-title {
+  font-family: var(--font-d);
+  font-size: 21px;
+  color: white;
+  line-height: 1.2;
+  position: relative;
+}
+
+.tut-body {
+  padding: 18px 22px 22px;
+}
+.tut-desc {
+  font-size: 13.5px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.tut-progress {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 16px;
+}
+.tut-dot {
+  height: 7px;
+  border-radius: 4px;
+  background: var(--border);
+  transition:
+    background 0.25s,
+    width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 7px;
+}
+.tut-dot.active {
+  background: var(--violet);
+  width: 22px;
+}
+.tut-dot.done {
+  background: var(--violet-m);
+}
+
+.tut-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+.tut-skip {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--soft);
+  padding: 6px 10px;
+  border-radius: var(--r-sm);
+  transition:
+    color 0.18s,
+    background 0.18s;
+}
+.tut-skip:hover {
+  color: var(--muted);
+  background: var(--bg);
+}
+.tut-btns {
+  display: flex;
+  gap: 8px;
+}
+.tut-btn-prev {
+  padding: 9px 16px;
+  border-radius: var(--r-md);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--violet);
+  background: var(--violet-s);
+  transition: background 0.18s;
+}
+.tut-btn-prev:hover {
+  background: var(--violet-m);
+}
+.tut-btn-next {
+  padding: 9px 20px;
+  border-radius: var(--r-md);
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+  background: linear-gradient(135deg, var(--violet), var(--violet3));
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 16px rgba(109, 40, 217, 0.35);
+  transition:
+    transform 0.15s,
+    box-shadow 0.2s;
+}
+.tut-btn-next:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 22px rgba(109, 40, 217, 0.45);
+}
+
+/* Completion screen */
+.tut-done-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: rgba(12, 0, 30, 0.72);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tut-done-card {
+  background: white;
+  border-radius: 28px;
+  padding: 48px 44px;
+  text-align: center;
+  max-width: 360px;
+  box-shadow: 0 40px 80px rgba(30, 0, 60, 0.3);
+}
+.tut-done-emoji {
+  font-size: 56px;
+  display: block;
+  margin-bottom: 16px;
+}
+.tut-done-title {
+  font-family: var(--font-d);
+  font-size: 26px;
+  margin-bottom: 8px;
+}
+.tut-done-sub {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.tut-done-btn {
+  margin-top: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, var(--violet), var(--violet3));
+  color: white;
+  border-radius: var(--r-md);
+  padding: 12px 28px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-b);
+  box-shadow: 0 6px 20px rgba(109, 40, 217, 0.35);
+  cursor: pointer;
+  border: none;
+  transition:
+    transform 0.15s,
+    box-shadow 0.2s;
+}
+.tut-done-btn:hover {
+  transform: translateY(-2px);
+}
+
+/* Tutorial transitions */
+.tut-fade-enter-active,
+.tut-fade-leave-active {
+  transition: opacity 0.35s ease;
+}
+.tut-fade-enter-from,
+.tut-fade-leave-to {
+  opacity: 0;
+}
+
+.tut-card-enter-active {
+  transition:
+    opacity 0.35s ease,
+    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.tut-card-leave-active {
+  transition: opacity 0.2s ease;
+}
+.tut-card-enter-from {
+  opacity: 0;
+  transform: scale(0.88) translateY(10px);
+}
+.tut-card-leave-to {
+  opacity: 0;
+}
+
+.tut-done-enter-active {
+  transition: opacity 0.35s ease;
+}
+.tut-done-leave-active {
+  transition: opacity 0.25s ease;
+}
+.tut-done-enter-from,
+.tut-done-leave-to {
+  opacity: 0;
 }
 
 ::-webkit-scrollbar {
@@ -2733,9 +3214,6 @@ input {
   .events-grid {
     grid-template-columns: 1fr;
   }
-  .featured-title {
-    font-size: 20px;
-  }
   .stats-row {
     grid-template-columns: 1fr 1fr;
   }
@@ -2744,6 +3222,9 @@ input {
   }
   .hero-greeting {
     font-size: 28px;
+  }
+  .tut-card {
+    width: calc(100vw - 24px);
   }
 }
 </style>
