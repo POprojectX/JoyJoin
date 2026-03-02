@@ -1308,7 +1308,6 @@ const steps = [
 ];
 
 function lockPage() {
-  document.body.style.overflow = "hidden";
   document.body.style.userSelect = "none";
 }
 function unlockPage() {
@@ -1750,7 +1749,6 @@ input {
 
 .hero {
   position: relative;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -1762,7 +1760,6 @@ input {
 .hero-blobs {
   position: absolute;
   inset: 0;
-  overflow: hidden;
 }
 .blob {
   position: absolute;
@@ -1944,7 +1941,6 @@ input {
   backdrop-filter: blur(8px);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   padding: 8px 0;
-  overflow: hidden;
 }
 .ticker-track {
   display: flex;
@@ -2159,7 +2155,6 @@ input {
   background: var(--surface);
   border-radius: var(--r-lg);
   border: 1px solid var(--border);
-  overflow: hidden;
   box-shadow: var(--sh-sm);
   animation: fadeUp 0.45s ease both;
   transition:
@@ -2177,7 +2172,6 @@ input {
   align-items: center;
   justify-content: center;
   position: relative;
-  overflow: hidden;
 }
 .event-img-bg {
   position: absolute;
@@ -2314,7 +2308,6 @@ input {
   align-items: stretch;
   background: linear-gradient(135deg, #2e1065, #4c1d95);
   border-radius: var(--r-xl);
-  overflow: hidden;
   box-shadow: var(--sh-lg);
   min-height: 190px;
   transition:
@@ -2332,7 +2325,6 @@ input {
   align-items: center;
   justify-content: center;
   position: relative;
-  overflow: hidden;
   background: linear-gradient(135deg, #1e0a4e, #3b0764);
 }
 .featured-orbs {
@@ -2704,7 +2696,6 @@ input {
   font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
-  overflow: hidden;
   text-overflow: ellipsis;
 }
 .friend-ev {
@@ -2712,7 +2703,6 @@ input {
   color: var(--muted);
   margin-top: 2px;
   white-space: nowrap;
-  overflow: hidden;
   text-overflow: ellipsis;
 }
 .friend-time {
@@ -2745,7 +2735,6 @@ input {
 .modal-card {
   background: var(--surface);
   border-radius: var(--r-xl);
-  overflow: hidden;
   width: 100%;
   max-width: 440px;
   box-shadow: 0 40px 80px rgba(0, 0, 0, 0.4);
@@ -2756,7 +2745,6 @@ input {
   align-items: center;
   justify-content: center;
   position: relative;
-  overflow: hidden;
 }
 .modal-hero-bg {
   position: absolute;
@@ -2928,7 +2916,6 @@ input {
   border-radius: 20px 20px 0 0;
   padding: 20px 22px 18px;
   position: relative;
-  overflow: hidden;
 }
 .tut-header::before {
   content: "";
